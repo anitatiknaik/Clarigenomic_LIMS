@@ -310,35 +310,54 @@ function persist(){
   clearTimeout(SAVE_TIMER);
   SAVE_TIMER=setTimeout(flushSave,600);
 }
-function flushSave(){
+/* Loads a URL via a <script> tag and waits for it to call back with JSON
+   (JSONP). Used for every request to the API — including saves — because
+   Apps Script Web Apps route requests through an internal redirect before
+   running your code, and that redirect reliably drops the body of POST
+   requests. GET requests have no separate body to lose (the data lives in
+   the URL itself), so saves are split into small GET "chunks" instead. */
+let JSONP_SEQ=0;
+function jsonpRequest(url){
+  return new Promise((resolve,reject)=>{
+    const cbName='__lims_cb_'+(JSONP_SEQ++)+'_'+Date.now();
+    const script=document.createElement('script');
+    let settled=false;
+    const cleanup=()=>{ delete window[cbName]; if(script.parentNode)script.parentNode.removeChild(script); };
+    window[cbName]=(r)=>{ if(settled)return; settled=true; cleanup(); resolve(r); };
+    script.onerror=()=>{ if(settled)return; settled=true; cleanup(); reject(new Error('Request failed (network or bad URL)')); };
+    script.src=url+(url.indexOf('?')>-1?'&':'?')+'callback='+cbName;
+    document.head.appendChild(script);
+  });
+}
+const SAVE_CHUNK_SIZE=1400; // raw chars per chunk, kept well under safe URL length limits
+async function flushSave(){
   if(!ID_TOKEN)return;
   if(SAVE_INFLIGHT){SAVE_PENDING=true;return;}
   SAVE_INFLIGHT=true;
-  /* Plain fetch (no mode:'no-cors'). Apps Script's /exec URL responds via
-     an internal redirect before actually running the script; no-cors mode
-     was dropping the POST body across that redirect, so doPost() never
-     received any data. A normal fetch delivers the body correctly. We
-     still can't read the JSON response back (Apps Script sends no CORS
-     headers), so any attempt to read it throws — we treat that specific,
-     expected failure as "probably saved" rather than a real error, since
-     by that point the request has already reached the server. */
-  fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:ID_TOKEN,db:DB})})
-    .then(r=>r.json().catch(()=>({ok:true})))
-    .then(()=>{
-      SAVE_INFLIGHT=false;NOSTORE=false;
-      const b=document.getElementById('storeBanner');if(b)b.style.display='none';
-      if(SAVE_PENDING){SAVE_PENDING=false;flushSave();}
-    })
-    .catch(err=>{
-      /* A CORS-blocked response read also lands here as "Failed to fetch",
-         indistinguishable from a genuine network failure — but the request
-         itself very likely still reached doPost(). Treat it the same as
-         success rather than alarming the user; check Executions in Apps
-         Script if you want to confirm a specific save. */
-      SAVE_INFLIGHT=false;NOSTORE=false;
-      console.warn('save: could not confirm (likely just a CORS response-read block, not a real failure):',err);
-      if(SAVE_PENDING){SAVE_PENDING=false;flushSave();}
-    });
+  const b=document.getElementById('storeBanner');
+  try{
+    const json=JSON.stringify(DB);
+    const session='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    const chunks=[];
+    for(let i=0;i<json.length;i+=SAVE_CHUNK_SIZE) chunks.push(json.slice(i,i+SAVE_CHUNK_SIZE));
+    if(chunks.length===0) chunks.push('');
+    for(let i=0;i<chunks.length;i++){
+      const url=API_URL+'?action=savechunk&session='+encodeURIComponent(session)+'&idx='+i+'&total='+chunks.length+'&data='+encodeURIComponent(chunks[i]);
+      const r=await jsonpRequest(url);
+      if(!r||!r.ok) throw new Error((r&&r.error)||('chunk '+i+' failed to save'));
+    }
+    const commitUrl=API_URL+'?action=savecommit&token='+encodeURIComponent(ID_TOKEN)+'&session='+encodeURIComponent(session)+'&total='+chunks.length;
+    const r=await jsonpRequest(commitUrl);
+    if(!r||!r.ok) throw new Error((r&&r.error)||'save failed to commit');
+    SAVE_INFLIGHT=false;NOSTORE=false;
+    if(b)b.style.display='none';
+    if(SAVE_PENDING){SAVE_PENDING=false;flushSave();}
+  }catch(err){
+    SAVE_INFLIGHT=false;NOSTORE=true;
+    if(b)b.style.display='block';
+    console.error('save failed:',err);
+    if(SAVE_PENDING){SAVE_PENDING=false;flushSave();}
+  }
 }
 const STATUSES=['Received','QC','Extraction','PCR','Sequencing','Analysis','Report Ready','Delivered'];
 const MARKERS=['—','COI','ITS2','16S','matK','rbcL'];
@@ -452,9 +471,9 @@ function loadData_(){
   script.onerror=function(){
     if(settled)return; settled=true;
     cleanup();
-    bootFailed_(new Error('Could not reach the data . Check _URL is correct.'));
+    bootFailed_(new Error('Could not reach the data API. Check API_URL is correct.'));
   };
-  script.src=_URL+'?token='+encodeURIComponent(ID_TOKEN)+'&callback='+cbName;
+  script.src=API_URL+'?token='+encodeURIComponent(ID_TOKEN)+'&callback='+cbName;
   document.head.appendChild(script);
 }
 function handleSignIn_(response){
