@@ -1,0 +1,3127 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ClariGenoMic LIMS</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+         :root {
+            --purple: #4B2E83;
+            --purple-d: #3A2266;
+            --purple-l: #6E4DA0;
+            --lav: #EDE9F4;
+            --lav-2: #F6F4FB;
+            --silver: #D9D3E6;
+            --ink: #211C2B;
+            --muted: #6B6480;
+            --line: #E3DEEE;
+            --white: #fff;
+            --ok: #0E7C5A;
+            --warn: #B7791F;
+            --info: #2563A8;
+            --slate: #5B6472;
+            --rose: #B23A6B;
+            --shadow: 0 1px 2px rgba(40, 28, 70, .06), 0 8px 24px rgba(40, 28, 70, .08);
+            --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+            --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        * {
+            box-sizing: border-box
+        }
+        
+        html,
+        body {
+            margin: 0;
+            height: 100%
+        }
+        
+        body {
+            font-family: var(--sans);
+            color: var(--ink);
+            background: var(--lav-2);
+            font-size: 14px;
+            line-height: 1.45
+        }
+        
+        button {
+            font-family: inherit;
+            cursor: pointer
+        }
+        
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+            font-size: 14px
+        }
+        
+        a {
+            color: var(--purple)
+        }
+        /* layout */
+        
+        .app {
+            display: grid;
+            grid-template-columns: 228px 1fr;
+            min-height: 100vh
+        }
+        
+        .side {
+            background: linear-gradient(180deg, var(--purple) 0%, var(--purple-d) 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh
+        }
+        
+        .brand {
+            padding: 20px 18px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, .12)
+        }
+        
+        .brand .mark {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+        
+        .brand .dna {
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px
+        }
+        
+        .brand h1 {
+            font-size: 15px;
+            margin: 0;
+            letter-spacing: .2px;
+            font-weight: 700;
+            line-height: 1.15
+        }
+        
+        .brand small {
+            display: block;
+            color: #cfc3e8;
+            font-size: 10.5px;
+            margin-top: 3px;
+            letter-spacing: .3px;
+            text-transform: uppercase
+        }
+        
+        nav {
+            padding: 10px 8px;
+            flex: 1;
+            overflow: auto
+        }
+        
+        nav button {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            width: 100%;
+            border: 0;
+            background: transparent;
+            color: #e7e0f5;
+            padding: 10px 12px;
+            border-radius: 9px;
+            text-align: left;
+            font-size: 13.5px;
+            margin-bottom: 2px
+        }
+        
+        nav button .ic {
+            width: 17px;
+            text-align: center;
+            opacity: .9
+        }
+        
+        nav button:hover {
+            background: rgba(255, 255, 255, .10)
+        }
+        
+        nav button.active {
+            background: #fff;
+            color: var(--purple);
+            font-weight: 600
+        }
+        
+        .side-foot {
+            padding: 12px 14px;
+            border-top: 1px solid rgba(255, 255, 255, .12);
+            font-size: 11px;
+            color: #c9bce4
+        }
+        
+        main {
+            min-width: 0
+        }
+        
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 26px;
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 5
+        }
+        
+        .topbar h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700
+        }
+        
+        .topbar .sub {
+            color: var(--muted);
+            font-size: 12.5px;
+            margin-top: 2px
+        }
+        
+        .wrap {
+            padding: 22px 26px 60px;
+            max-width: 1180px
+        }
+        
+        .btn {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-size: 13.5px;
+            font-weight: 500
+        }
+        
+        .btn:hover {
+            border-color: var(--silver);
+            background: var(--lav-2)
+        }
+        
+        .btn.primary {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: #fff
+        }
+        
+        .btn.primary:hover {
+            background: var(--purple-d)
+        }
+        
+        .btn.ghost {
+            background: transparent;
+            border-color: transparent;
+            color: var(--purple)
+        }
+        
+        .btn.sm {
+            padding: 5px 10px;
+            font-size: 12.5px;
+            border-radius: 7px
+        }
+        
+        .btn.danger:hover {
+            border-color: var(--rose);
+            color: var(--rose)
+        }
+        /* cards */
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px
+        }
+        
+        .card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 13px;
+            padding: 15px 16px;
+            box-shadow: var(--shadow)
+        }
+        
+        .card .k {
+            font-size: 11.5px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            font-weight: 600
+        }
+        
+        .card .v {
+            font-size: 26px;
+            font-weight: 700;
+            margin-top: 6px;
+            color: var(--purple);
+            font-variant-numeric: tabular-nums
+        }
+        
+        .card .v.rs {
+            font-size: 22px
+        }
+        
+        .card.accent {
+            background: linear-gradient(135deg, var(--purple), var(--purple-l));
+            border: 0
+        }
+        
+        .card.accent .k {
+            color: #e3d8f5
+        }
+        
+        .card.accent .v {
+            color: #fff
+        }
+        
+        .panel {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 13px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 22px
+        }
+        
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--line)
+        }
+        
+        .panel-head h3 {
+            margin: 0;
+            font-size: 14.5px;
+            font-weight: 700
+        }
+        
+        .panel-head .tools {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+        /* table */
+        
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+        
+        th,
+        td {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: middle
+        }
+        
+        th {
+            background: var(--lav-2);
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            position: sticky;
+            top: 0
+        }
+        
+        tbody tr:hover {
+            background: var(--lav-2)
+        }
+        
+        td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums
+        }
+        
+        .acc {
+            font-family: var(--mono);
+            font-size: 12px;
+            background: var(--lav);
+            color: var(--purple-d);
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-weight: 600;
+            letter-spacing: .3px;
+            white-space: nowrap
+        }
+        
+        .empty {
+            padding: 46px 20px;
+            text-align: center;
+            color: var(--muted)
+        }
+        
+        .empty .big {
+            font-size: 15px;
+            color: var(--ink);
+            font-weight: 600;
+            margin-bottom: 4px
+        }
+        /* status pills */
+        
+        .pill {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 600;
+            white-space: nowrap
+        }
+        
+        .s-Received {
+            background: #eef0f3;
+            color: var(--slate)
+        }
+        
+        .s-QC,
+        .s-Extraction,
+        .s-PCR,
+        .s-Sequencing,
+        .s-Analysis {
+            background: #fdf3e0;
+            color: var(--warn)
+        }
+        
+        .s-Report.Ready,
+        .s-ReportReady {
+            background: #e3f4ef;
+            color: var(--ok)
+        }
+        
+        .s-Delivered {
+            background: #e8f1fb;
+            color: var(--info)
+        }
+        
+        .pay-Paid {
+            background: #e3f4ef;
+            color: var(--ok)
+        }
+        
+        .pay-Pending {
+            background: #fdf3e0;
+            color: var(--warn)
+        }
+        
+        .pay-Partial {
+            background: #f6e8ef;
+            color: var(--rose)
+        }
+        
+        select.statussel {
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 4px 6px;
+            font-size: 12px;
+            background: #fff
+        }
+        
+        .filters {
+            display: flex;
+            gap: 9px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+        
+        .filters input,
+        .filters select {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 7px 10px;
+            background: #fff
+        }
+        
+        .filters input[type=search] {
+            min-width: 180px
+        }
+        /* modal */
+        
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(33, 22, 50, .42);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 34px 16px;
+            z-index: 50;
+            overflow: auto
+        }
+        
+        .overlay.show {
+            display: flex
+        }
+        
+        .modal {
+            background: #fff;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 620px;
+            box-shadow: 0 20px 60px rgba(33, 22, 50, .3);
+            animation: pop .14s ease
+        }
+        
+        .modal.wide {
+            max-width: 760px
+        }
+        
+        @keyframes pop {
+            from {
+                transform: translateY(8px);
+                opacity: .6
+            }
+            to {
+                transform: none;
+                opacity: 1
+            }
+        }
+        
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--line)
+        }
+        
+        .modal-head h3 {
+            margin: 0;
+            font-size: 16px
+        }
+        
+        .modal-body {
+            padding: 18px 20px;
+            max-height: 70vh;
+            overflow: auto
+        }
+        
+        .modal-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 9px;
+            padding: 14px 20px;
+            border-top: 1px solid var(--line)
+        }
+        
+        .x {
+            border: 0;
+            background: transparent;
+            font-size: 21px;
+            color: var(--muted);
+            line-height: 1
+        }
+        
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 13px
+        }
+        
+        .grid3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 13px
+        }
+        
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 13px
+        }
+        
+        .field.full {
+            grid-column: 1/-1
+        }
+        
+        .field label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted)
+        }
+        
+        .field input,
+        .field select,
+        .field textarea {
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 9px 11px;
+            background: #fff;
+            width: 100%
+        }
+        
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            outline: 2px solid var(--lav);
+            border-color: var(--purple-l)
+        }
+        
+        .field textarea {
+            min-height: 62px;
+            resize: vertical
+        }
+        
+        .hint {
+            font-size: 11.5px;
+            color: var(--muted)
+        }
+        
+        .checkrow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            margin-bottom: 7px
+        }
+        
+        .checkrow:hover {
+            background: var(--lav-2)
+        }
+        
+        .checkrow .meta {
+            flex: 1;
+            font-size: 13px
+        }
+        
+        .checkrow .amt {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--ink);
+            color: #fff;
+            padding: 11px 18px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            box-shadow: var(--shadow);
+            z-index: 80;
+            opacity: 0;
+            transition: opacity .2s, transform .2s
+        }
+        
+        .toast.show {
+            opacity: 1
+        }
+        
+        .banner {
+            background: #fdf3e0;
+            color: var(--warn);
+            border: 1px solid #f1dcae;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12.5px;
+            margin-bottom: 16px;
+            display: none
+        }
+        /* print doc */
+        
+        #printArea {
+            display: none
+        }
+        
+        .doc {
+            font-family: var(--sans);
+            color: #111;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 34px 38px
+        }
+        
+        .doc-head {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--purple);
+            padding-bottom: 14px;
+            margin-bottom: 6px
+        }
+        
+        .doc-head .ln {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--purple);
+            letter-spacing: .2px
+        }
+        
+        .doc-head .tag {
+            font-size: 11px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px
+        }
+        
+        .doc-head .ci {
+            font-size: 11.5px;
+            color: #444;
+            text-align: right;
+            line-height: 1.5
+        }
+        
+        .doc h1.rt {
+            font-size: 15px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 16px 0 14px;
+            color: #222;
+            background: var(--lav);
+            padding: 7px;
+            border-radius: 6px
+        }
+        
+        .doc .meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px 24px;
+            font-size: 12.5px;
+            margin-bottom: 14px
+        }
+        
+        .doc .meta b {
+            color: #333
+        }
+        
+        .doc table.info {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0 14px;
+            font-size: 12px
+        }
+        
+        .doc table.info td {
+            border: 1px solid #d8d2e6;
+            padding: 6px 9px;
+            vertical-align: top
+        }
+        
+        .doc table.info td.lbl {
+            background: var(--lav-2);
+            color: #555;
+            font-weight: 600;
+            width: 18%;
+            white-space: nowrap
+        }
+        
+        .doc .sec {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--purple);
+            font-weight: 700;
+            margin: 16px 0 6px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 3px
+        }
+        
+        .doc .method {
+            font-size: 11.5px;
+            color: #333;
+            line-height: 1.6;
+            text-align: justify
+        }
+        
+        .doc .interp {
+            border: 1px solid #d8d2e6;
+            border-left: 4px solid var(--purple);
+            border-radius: 5px;
+            padding: 9px 12px;
+            font-size: 12.5px;
+            margin: 6px 0
+        }
+        
+        .doc .status-final {
+            display: inline-block;
+            background: #e3f4ef;
+            color: var(--ok);
+            font-weight: 700;
+            font-size: 10.5px;
+            padding: 2px 9px;
+            border-radius: 12px;
+            letter-spacing: .5px
+        }
+        
+        .rhead {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 2.5px solid #0F9D6E;
+            padding-bottom: 8px;
+            margin-bottom: 4px
+        }
+        
+        .rhead .logo {
+            width: 46px;
+            height: 46px;
+            flex: 0 0 46px
+        }
+        
+        .rhead .mid {
+            flex: 1;
+            text-align: center
+        }
+        
+        .rhead .mid .nm {
+            font-size: 15.5px;
+            font-weight: 800;
+            color: #111;
+            letter-spacing: .2px
+        }
+        
+        .rhead .mid .ad {
+            font-size: 9.5px;
+            color: #444;
+            margin-top: 1px
+        }
+        
+        .rhead .ct {
+            font-size: 9px;
+            color: #333;
+            text-align: right;
+            line-height: 1.7;
+            white-space: nowrap
+        }
+        
+        .rtitle {
+            text-align: center;
+            font-weight: 700;
+            font-size: 12.5px;
+            margin: 4px 0 12px
+        }
+        
+        .cust {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            margin-bottom: 14px
+        }
+        
+        .cust td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            font-weight: 700;
+            vertical-align: top;
+            width: 50%
+        }
+        
+        .cust td .v {
+            font-weight: 400
+        }
+        
+        .repttl {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 800;
+            text-decoration: underline;
+            margin: 8px 0 14px;
+            letter-spacing: .3px
+        }
+        
+        .nsec {
+            font-size: 12px;
+            margin: 10px 0 3px;
+            font-weight: 700
+        }
+        
+        .nbody {
+            font-size: 11px;
+            line-height: 1.6;
+            text-align: var(--docalign, justify);
+            margin-bottom: 6px
+        }
+        
+        .figwrap {
+            text-align: center;
+            margin: 10px 0 2px
+        }
+        
+        .figwrap img {
+            max-width: 220px;
+            border: 1px solid #ccc
+        }
+        
+        .figcap {
+            text-align: center;
+            font-weight: 700;
+            font-size: 11px;
+            margin: 4px 0 12px
+        }
+        
+        .fasta {
+            font-family: var(--mono);
+            font-size: 9px;
+            line-height: 1.5;
+            word-break: break-all;
+            border: 1px solid #eee;
+            background: #fafafa;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0 12px
+        }
+        
+        .blast {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            margin: 6px 0 14px
+        }
+        
+        .blast th,
+        .blast td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            text-align: center
+        }
+        
+        .blast th {
+            background: transparent;
+            color: #000;
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 700;
+            position: static;
+            font-size: 10.5px
+        }
+        
+        .bhd {
+            font-size: 12.5px;
+            font-weight: 700;
+            margin: 12px 0 6px
+        }
+        
+        .blist {
+            margin: 2px 0 12px;
+            padding-left: 20px;
+            font-size: 11px;
+            line-height: 1.6
+        }
+        
+        .blist li {
+            margin-bottom: 3px
+        }
+        
+        .sigblock {
+            margin-top: 30px;
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.5
+        }
+        
+        .sigblock .sn {
+            font-weight: 700
+        }
+        
+        .sigblock img {
+            height: 44px;
+            margin: 3px 0
+        }
+        
+        .endrep {
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            margin: 16px 0 6px
+        }
+        
+        .rfoot {
+            margin-top: 18px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5px;
+            color: #333
+        }
+        
+        .opage {
+            page-break-after: always;
+            padding-bottom: 6px
+        }
+        
+        .opage:last-child {
+            page-break-after: auto
+        }
+        
+        .opage img.pg {
+            display: block;
+            max-width: 100%;
+            border: 1px solid #ccc;
+            margin: 10px auto
+        }
+        
+        .obanner {
+            font-size: 10.5px;
+            color: #3A2266;
+            background: #f6f4fb;
+            border: 1px solid #e3deee;
+            border-radius: 5px;
+            padding: 7px 10px;
+            margin: 8px 0
+        }
+        
+        .qdoc {
+            font-family: 'Times New Roman', Georgia, serif;
+            color: #111;
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 24px 30px;
+            max-width: 780px;
+            margin: 0 auto
+        }
+        
+        .qhead {
+            text-align: center;
+            border-bottom: 2.5px solid #0F9D6E;
+            padding-bottom: 8px;
+            position: relative;
+            min-height: 62px
+        }
+        
+        .qhead .qlogo {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 60px;
+            height: 60px;
+            object-fit: contain
+        }
+        
+        .qhead .nm {
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: .2px
+        }
+        
+        .qhead .ad {
+            font-size: 10.5px
+        }
+        
+        .qref {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin: 10px 0 2px;
+            font-weight: 700
+        }
+        
+        .qtitle {
+            text-align: center;
+            color: #0F9D6E;
+            font-weight: 700;
+            font-size: 17px;
+            margin: 6px 0 8px
+        }
+        
+        .qto {
+            margin: 4px 0;
+            font-size: 12px
+        }
+        
+        .qsub {
+            margin: 8px 0
+        }
+        
+        .qintro {
+            margin: 8px 0;
+            text-align: var(--docalign, justify)
+        }
+        
+        .qtable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            margin: 8px 0
+        }
+        
+        .qtable th,
+        .qtable td {
+            border: 1px solid #000;
+            padding: 5px 7px;
+            text-align: center;
+            vertical-align: top
+        }
+        
+        .qtable th {
+            font-weight: 700
+        }
+        
+        .qtable td.tr {
+            text-align: right;
+            font-weight: 700
+        }
+        
+        .qtable td.words {
+            text-align: left;
+            font-weight: 700
+        }
+        
+        .qnote {
+            font-weight: 700;
+            text-decoration: underline;
+            margin: 10px 0;
+            font-size: 11px
+        }
+        
+        .qterms-h {
+            color: #0F9D6E;
+            font-weight: 700;
+            margin: 12px 0 4px
+        }
+        
+        .qterms {
+            font-size: 11px;
+            padding-left: 22px;
+            margin: 0
+        }
+        
+        .qterms li {
+            margin-bottom: 2px
+        }
+        
+        .qsign {
+            text-align: right;
+            margin-top: 34px;
+            font-weight: 700
+        }
+        
+        .qsign img {
+            display: block;
+            margin-left: auto;
+            height: 48px;
+            margin-bottom: 2px
+        }
+        
+        .qfoot {
+            border-top: 2px solid #0F9D6E;
+            margin-top: 20px;
+            padding-top: 5px;
+            text-align: center;
+            font-style: italic;
+            font-size: 9px;
+            color: #444
+        }
+        
+        .qedit th {
+            font-weight: 600;
+            color: var(--muted);
+            padding: 4px;
+            border-bottom: 1px solid var(--line)
+        }
+        
+        .qedit td {
+            padding: 4px;
+            vertical-align: top
+        }
+        
+        .potermspage {
+            page-break-before: always;
+            padding-top: 6px
+        }
+        
+        .doc table.rep {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0 14px
+        }
+        
+        .doc table.rep th {
+            background: var(--purple);
+            color: #fff;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            padding: 8px 10px;
+            text-align: left
+        }
+        
+        .doc table.rep td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            font-size: 12.5px
+        }
+        
+        .doc .sig {
+            margin-top: 46px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px
+        }
+        
+        .doc .sig .box {
+            text-align: center
+        }
+        
+        .doc .sig .line {
+            border-top: 1px solid #555;
+            width: 170px;
+            margin-top: 34px;
+            padding-top: 5px
+        }
+        
+        .doc .foot {
+            margin-top: 26px;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            font-size: 10.5px;
+            color: #777;
+            text-align: center
+        }
+        
+        .doc .mono {
+            font-family: var(--mono)
+        }
+        
+        .totbox {
+            margin-left: auto;
+            width: 280px;
+            font-size: 12.5px
+        }
+        
+        .totbox .r {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0
+        }
+        
+        .totbox .r.grand {
+            border-top: 2px solid var(--purple);
+            margin-top: 5px;
+            padding-top: 7px;
+            font-weight: 800;
+            color: var(--purple);
+            font-size: 14px
+        }
+        
+        .tinv-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 1px solid #000;
+            padding: 6px;
+            margin: 14px 0
+        }
+        
+        .tinv-meta {
+            font-size: 11.5px;
+            margin: 10px 0 4px
+        }
+        
+        .tinv-meta .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 3px
+        }
+        
+        .tinv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10.5px;
+            margin: 10px 0
+        }
+        
+        .tinv-table th {
+            background: var(--purple);
+            color: #fff;
+            padding: 6px 7px;
+            text-align: center;
+            font-weight: 700
+        }
+        
+        .tinv-table td {
+            border: 1px solid #ccc;
+            padding: 6px 7px;
+            text-align: center
+        }
+        
+        .tinv-words {
+            font-size: 11px;
+            margin: 8px 0 12px
+        }
+        
+        .tinv-acct {
+            border: 1px solid #999;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-size: 11px;
+            margin: 10px 0;
+            line-height: 1.6
+        }
+        
+        .tinv-acct b {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--purple)
+        }
+        
+        .tinv-terms h4 {
+            font-size: 11.5px;
+            color: var(--purple);
+            margin: 12px 0 4px
+        }
+        
+        .tinv-terms ol {
+            font-size: 10.5px;
+            padding-left: 20px;
+            margin: 0 0 8px;
+            line-height: 1.6
+        }
+        
+        .tinv-decl {
+            font-size: 10.5px;
+            margin: 8px 0 30px
+        }
+        
+        .tinv-sig {
+            text-align: left;
+            font-size: 11px;
+            border-top: 1px solid #555;
+            width: 200px;
+            margin-top: 40px;
+            padding-top: 4px
+        }
+        
+        .tinv-foot {
+            margin-top: 14px;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            line-height: 1.6
+        }
+        
+        .tinv-foot .i {
+            font-style: italic
+        }
+        
+        @media (max-width:760px) {
+            .app {
+                grid-template-columns: 1fr
+            }
+            .side {
+                position: fixed;
+                left: -240px;
+                transition: left .2s;
+                z-index: 60;
+                width: 228px
+            }
+            .side.open {
+                left: 0
+            }
+            .menu-btn {
+                display: inline-flex!important
+            }
+            .grid2,
+            .grid3 {
+                grid-template-columns: 1fr
+            }
+        }
+        
+        .menu-btn {
+            display: none;
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 16px
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden
+            }
+            #printArea,
+            #printArea * {
+                visibility: visible
+            }
+            #printArea {
+                display: block!important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%
+            }
+            @page {
+                margin: 14mm
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="signInScreen" style="min-height:100vh;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#4B2E83">
+        <div style="font-size:20px;font-weight:700">ClariGenoMic LIMS</div>
+        <div style="color:#6B6480;font-size:14px;margin-bottom:6px">Sign in with an approved Google account to continue</div>
+        <div id="g_id_signin_container"></div>
+        <div id="signInMsg" style="color:#B23A6B;font-size:13px;max-width:320px;text-align:center"></div>
+    </div>
+    <div id="bootScreen" style="min-height:100vh;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#4B2E83">
+        <div style="width:34px;height:34px;border:3px solid #EDE9F4;border-top-color:#4B2E83;border-radius:50%;animation:bootspin 0.8s linear infinite"></div>
+        <div id="bootMsg">Connecting to your data…</div>
+        <style>
+            @keyframes bootspin {
+                to {
+                    transform: rotate(360deg)
+                }
+            }
+        </style>
+    </div>
+    <div class="app" id="appRoot" style="display:none">
+        <aside class="side" id="side">
+            <div class="brand">
+                <div class="mark">
+                    <svg class="dna" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round">
+          <path d="M7 3c0 5 10 7 10 12M17 3c0 5-10 7-10 12M7 9h10M9 6h6M9 18h6M7 21c0-3 10-3 10-6"/>
+        </svg>
+                    <div>
+                        <h1>ClariGenoMic</h1><small>LIMS</small></div>
+                </div>
+            </div>
+            <nav id="nav">
+                <button onclick="go('dashboard')" class="active"><span class="ic">▤</span> Dashboard</button>
+                <button onclick="go('samples')"><span class="ic">⬡</span> Samples</button>
+                <button onclick="go('clients')"><span class="ic">◍</span> Clients</button>
+                <button onclick="go('catalogue')"><span class="ic">≣</span> Test Catalogue</button>
+                <button onclick="go('invoices')"><span class="ic">₹</span> Invoices</button>
+                <button onclick="go('quotations')"><span class="ic">📋</span> Quotations</button>
+                <button onclick="go('purchaseorders')"><span class="ic">📦</span> Purchase Orders</button>
+                <button onclick="go('suppliers')"><span class="ic">🚚</span> Suppliers</button>
+                <button onclick="go('settings')"><span class="ic">⚙</span> Settings</button>
+                <button onclick="go('backup')"><span class="ic">⤓</span> Backup</button>
+            </nav>
+            <div class="side-foot">Data saved to your Google Sheet.<br>Daily backups run automatically to Drive.</div>
+        </aside>
+
+        <main>
+            <div class="topbar">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <button class="menu-btn" onclick="document.getElementById('side').classList.toggle('open')">☰</button>
+                    <div>
+                        <h2 id="viewTitle">Dashboard</h2>
+                        <div class="sub" id="viewSub"></div>
+                    </div>
+                </div>
+                <div id="topActions"></div>
+            </div>
+            <div class="wrap">
+                <div class="banner" id="storeBanner">Heads up: the last save to your data sheet failed (connection issue). Your changes are kept in this tab — reload the page or check your connection, and edits will sync again.</div>
+                <div id="view"></div>
+            </div>
+        </main>
+    </div>
+
+    <div class="overlay" id="overlay">
+        <div class="modal" id="modal"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div id="printArea"></div>
+
+    <script>
+        const LOGO_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+        /* ---------------- storage (Apps Script JSON API, Google Sign-In) ---------------- */
+        /* PASTE YOUR DEPLOYED APPS SCRIPT WEB APP URL BELOW (ends in /exec) */
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwOtPUgC1bgauW-VKIKH1MQYVooGWq6j0di2DmICXsNGEX7jWEj5JHdnYvAIKzGasri5Q/exec';
+        /* Must exactly match OAUTH_CLIENT_ID in your Code.gs, and the Client ID from Google Cloud Console */
+        const OAUTH_CLIENT_ID = '110901751128-ohbaluvf0jotkmsurj0g2gm60h62667k.apps.googleusercontent.com';
+
+        let ID_TOKEN = null,
+            SIGNED_IN_EMAIL = null;
+        let NOSTORE = false,
+            SAVE_TIMER = null,
+            SAVE_PENDING = false,
+            SAVE_INFLIGHT = false;
+
+        function persist() {
+            clearTimeout(SAVE_TIMER);
+            SAVE_TIMER = setTimeout(flushSave, 600);
+        }
+
+        function flushSave() {
+            if (!ID_TOKEN) return;
+            if (SAVE_INFLIGHT) {
+                SAVE_PENDING = true;
+                return;
+            }
+            SAVE_INFLIGHT = true;
+            fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify({
+                        token: ID_TOKEN,
+                        db: DB
+                    })
+                })
+                .then(r => r.json())
+                .then(r => {
+                    if (!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+                    SAVE_INFLIGHT = false;
+                    NOSTORE = false;
+                    const b = document.getElementById('storeBanner');
+                    if (b) b.style.display = 'none';
+                    if (SAVE_PENDING) {
+                        SAVE_PENDING = false;
+                        flushSave();
+                    }
+                })
+                .catch(err => {
+                    SAVE_INFLIGHT = false;
+                    NOSTORE = true;
+                    const b = document.getElementById('storeBanner');
+                    if (b) b.style.display = 'block';
+                    console.error('save failed:', err);
+                    if (SAVE_PENDING) {
+                        SAVE_PENDING = false;
+                        flushSave();
+                    }
+                });
+        }
+        const STATUSES = ['Received', 'QC', 'Extraction', 'PCR', 'Sequencing', 'Analysis', 'Report Ready', 'Delivered'];
+        const MARKERS = ['—', 'COI', 'ITS2', '16S', 'matK', 'rbcL'];
+        const STATES = ['Maharashtra', 'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Manipur', 'Meghalaya', 'Odisha', 'Punjab', 'Rajasthan', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Other / Outside India'];
+
+        function seed() {
+            return {
+                settings: {
+                    labName: 'ClariGenoMic Research and Solutions',
+                    tagline: 'Genomics & Molecular Biology Solutions',
+                    address: 'Office No. 307, Chanyaknagari, Sinhgad Road, Hingane Khurd, Pune – 411051',
+                    email: 'info@clarigenomic.co.in',
+                    web: 'www.clarigenomic.co.in',
+                    phone: '+91-9405292921',
+                    gstin: '',
+                    homeState: 'Maharashtra',
+                    gstEnabled: true,
+                    signatoryName: 'Dr. Anita Tiknaik (PhD)',
+                    signatoryTitle: 'Institutional technical head and Genomic Analyst',
+                    signatureImg: '',
+                    limitations: 'Mixed signals, borderline quality, or novel sequences may require additional testing or consultation, which can delay reporting.\nProcessing time may increase if repeat sequencing or confirmatory analysis is needed.\nSpecies identification depends on public databases (e.g., NCBI, SILVA), whose completeness and quality may limit accuracy.',
+                    disclaimer: 'Bacterial 16S rRNA identification is considered species-level at ≥98% similarity, genus-level at 95–97.5%, and low confidence below 97%.\nFungal 18S/ITS identification is species-level at ≥98%, genus-level at ≥97.5% and low confidence below 95–97.5%.\nResults depend on sequence quality, database coverage, and may require confirmatory analysis.\nThe result corresponds to the same sample submitted.',
+                    logoImg: '',
+                    reportHeaderTitle: 'Test Report',
+                    reportTitleTpl: '{MARKER} IDENTIFICATION REPORT',
+                    methodDna: 'Genomic DNA was extracted by column-based method using a commercially available kit.',
+                    methodPcr: 'The PCR amplification was performed in a 25 µl reaction mixture containing 2–5 ng DNA using Takara PCR master mix. PCR amplification was carried out using {marker}.',
+                    methodSeq: 'The PCR products of the {marker} region were analyzed on a 1.5% agarose gel using 1.0% TBE (Tris-borate-EDTA) buffer. The products were subsequently purified with a commercially available purification kit and sequenced using the BigDye Terminator Cycle Sequencing Ready Reaction Kit on an Applied Biosystems ABI3500 DNA Sequencer (inhouse test methodology GA/SOP/IS/10).',
+                    autoEmail: false,
+                    email_tpls: {
+                        received: {
+                            subject: 'Sample {accession} received — {lab}',
+                            body: 'Dear {client},\n\nWe confirm receipt of your sample {accession} for {test}. Your sample has been registered and is now in our workflow. We will keep you updated as it progresses.\n\nRegards,\n{lab}'
+                        },
+                        processing: {
+                            subject: 'Update on sample {accession}',
+                            body: 'Dear {client},\n\nYour sample {accession} ({test}) is currently in progress — present status: {status}. We will notify you as soon as the report is ready.\n\nRegards,\n{lab}'
+                        },
+                        ready: {
+                            subject: 'Report ready — sample {accession}',
+                            body: 'Dear {client},\n\nThe analysis of your sample {accession} ({test}) is complete and the report is ready. We will share it with you shortly / it is available for collection.\n\nRegards,\n{lab}'
+                        },
+                        delivered: {
+                            subject: 'Report delivered — sample {accession}',
+                            body: 'Dear {client},\n\nThe report for sample {accession} ({test}) has been delivered. Thank you for choosing {lab}. We look forward to working with you again.\n\nRegards,\n{lab}'
+                        }
+                    },
+                    reportSections: [{
+                        id: 'specimen',
+                        heading: '1. Specimen',
+                        content: ''
+                    }, {
+                        id: 'dnaext',
+                        heading: '2. DNA extraction',
+                        content: 'Genomic DNA was extracted by column-based method using a commercially available kit.'
+                    }, {
+                        id: 'pcr',
+                        heading: '3. PCR amplification',
+                        content: 'The PCR amplification was performed in a 25 µl reaction mixture containing 2–5 ng DNA using Takara PCR master mix. PCR amplification was carried out using {marker}.'
+                    }, {
+                        id: 'seqanal',
+                        heading: '4. Qualitative analysis and sequencing',
+                        content: 'The PCR products of the {marker} region were analyzed on a 1.5% agarose gel using 1.0% TBE (Tris-borate-EDTA) buffer. The products were subsequently purified with a commercially available purification kit and sequenced using the BigDye Terminator Cycle Sequencing Ready Reaction Kit on an Applied Biosystems ABI3500 DNA Sequencer (inhouse test methodology GA/SOP/IS/10).'
+                    }],
+                    quoteSubject: 'Quotation for Sanger Sequencing',
+                    quoteNote: 'The cost of primer synthesis is not included in the quoted price and will be charged additionally at actuals.',
+                    quoteTerms: '50% advance payment required before sample processing begins.\nRemaining 50% to be paid upon delivery of results.\nSamples must be submitted with proper labeling and documentation.\nResults will be delivered via email in PDF / FASTQ format as applicable.\nClariGenoMic is not responsible for results arising from poor quality samples.\nThis quotation is valid for 60 days from the date of issue.',
+                    poTerms: 'Delivery period: As per Purchase Order / agreed timeline.\nPlace of delivery: The material/equipment shall be delivered at ClariGenoMic Research and Solutions, office No. 307, Chanyaknagari, Sinhgad Road, Hingane Khurd, Pune – 411051.\nPrice: Inclusive of all taxes, installation and delivery/supply on the above mentioned address.\nDiscount if any: Included in the cost.\nOther extra taxes: Inclusive of all taxes for ClariGenoMic Research and Solutions.\nWarranty / Guarantee: As per agreement/product specification.\nTerms of payment: 100% Payment after delivery, inspection of material, installation and expected functioning for its use.\nPenalty clause: On failure to supply/deliver the ordered materials/equipment within the stipulated time, the concerned vendor shall be liable for penalty. ClariGenoMic Research and Solutions reserves the right to cancel the order in such cases.\nOther: Nil.\nSpecial Instruction if any: Invoice — Supplier shall raise the invoice ONLY after successful installation, demonstration, and written acceptance by ClariGenoMic Research and Solutions.',
+                    bankAccName: 'Clarigenomic Research and Solutions',
+                    bankAccNo: '60583395199',
+                    bankIFSC: 'MAHB0001385',
+                    bankName: 'Bank of Maharashtra',
+                    bankBranch: 'Bavdhan, Pune',
+                    invTerms: 'Payment Terms: Any outstanding amount should be paid within 15 days from the date of invoice.\nThis invoice is issued for services completed and/or reports dispatched as applicable.\nThe client shall make payment using the bank details provided in this invoice.\nAny discrepancy in the invoice should be communicated to ClariGenoMic within 7 days of receipt.\nAll services are subject to the scope agreed in the quotation and the information/sample provided by the client.',
+                    invDeclaration: 'We declare that this invoice reflects the actual charges for the services described and that the particulars stated herein are true and correct.',
+                    docFont: '',
+                    docAlign: 'justify'
+                },
+                clients: [],
+                tests: [{
+                    code: 'BC-COI',
+                    name: 'COI Barcoding',
+                    cat: 'DNA Barcoding',
+                    price: 0,
+                    tat: 7,
+                    sac: '998311'
+                }, {
+                    code: 'BC-ITS2',
+                    name: 'ITS2 Barcoding',
+                    cat: 'DNA Barcoding',
+                    price: 0,
+                    tat: 7,
+                    sac: '998311'
+                }, {
+                    code: 'BC-16S',
+                    name: '16S Barcoding',
+                    cat: 'DNA Barcoding',
+                    price: 0,
+                    tat: 7,
+                    sac: '998311'
+                }, {
+                    code: 'BC-MATK',
+                    name: 'matK Barcoding',
+                    cat: 'DNA Barcoding',
+                    price: 0,
+                    tat: 7,
+                    sac: '998311'
+                }, {
+                    code: 'BC-RBCL',
+                    name: 'rbcL Barcoding',
+                    cat: 'DNA Barcoding',
+                    price: 0,
+                    tat: 7,
+                    sac: '998311'
+                }, {
+                    code: 'SEQ-SAN',
+                    name: 'Sanger Sequencing',
+                    cat: 'Sequencing',
+                    price: 0,
+                    tat: 5,
+                    sac: '998311'
+                }, {
+                    code: 'SEQ-NGS',
+                    name: 'NGS',
+                    cat: 'Sequencing',
+                    price: 0,
+                    tat: 21,
+                    sac: '998311'
+                }, {
+                    code: 'MICRO',
+                    name: 'Microbiological Testing',
+                    cat: 'Microbiology',
+                    price: 0,
+                    tat: 7,
+                    sac: '998312'
+                }, {
+                    code: 'FOOD',
+                    name: 'Food Safety Testing',
+                    cat: 'Food Safety',
+                    price: 0,
+                    tat: 10,
+                    sac: '998312'
+                }, {
+                    code: 'TRAIN',
+                    name: 'Student Training / Internship',
+                    cat: 'Training',
+                    price: 0,
+                    tat: 0,
+                    sac: '999293'
+                }],
+                samples: [],
+                invoices: [],
+                quotations: [],
+                purchaseorders: [],
+                suppliers: [],
+                counters: {}
+            };
+        }
+        let DB = null,
+            BOOT_DONE = false;
+
+        function normalizeDB_() {
+            DB.settings = Object.assign({}, seed().settings, DB.settings || {});
+            DB.quotations = DB.quotations || [];
+            DB.purchaseorders = DB.purchaseorders || [];
+            DB.suppliers = DB.suppliers || [];
+            DB.clients = DB.clients || [];
+            DB.tests = DB.tests || [];
+            DB.samples = DB.samples || [];
+            DB.invoices = DB.invoices || [];
+            DB.counters = DB.counters || {};
+            if (!DB.settings.reportSections || !DB.settings.reportSections.length) DB.settings.reportSections = seed().settings.reportSections;
+        }
+
+        function bootApp_(loadedDb) {
+            BOOT_DONE = true;
+            const isNew = !loadedDb;
+            DB = loadedDb || seed();
+            normalizeDB_();
+            if (isNew) persist();
+            document.getElementById('bootScreen').style.display = 'none';
+            document.getElementById('appRoot').style.display = '';
+            go('dashboard');
+        }
+
+        function bootFailed_(err) {
+            BOOT_DONE = true;
+            console.error('load failed:', err);
+            const el = document.getElementById('bootScreen');
+            if (el) el.innerHTML = '<div style="max-width:360px;text-align:center;color:#B23A6B;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif">' +
+                '<b>Could not load your data.</b><br><br>' + (err && err.message ? esc(err.message) : 'Check your connection and reload the page.') +
+                '<br><br><button onclick="location.reload()" style="padding:8px 16px;border-radius:8px;border:1px solid #E3DEEE;background:#fff;cursor:pointer">Reload</button></div>';
+        }
+
+        function loadData_() {
+            document.getElementById('signInScreen').style.display = 'none';
+            document.getElementById('bootScreen').style.display = 'flex';
+            setTimeout(function() {
+                if (BOOT_DONE) return;
+                const m = document.getElementById('bootMsg');
+                if (m) m.innerHTML = 'Still connecting… this is taking longer than expected.' +
+                    '<br><span style="font-size:12px;color:#6B6480;display:block;margin-top:8px;max-width:340px">' +
+                    'Open the browser console (F12 → Console) and check for a red error message.</span>';
+            }, 10000);
+            fetch(API_URL + '?token=' + encodeURIComponent(ID_TOKEN))
+                .then(r => r.json())
+                .then(r => {
+                    if (r && r.error) throw new Error(r.error);
+                    SIGNED_IN_EMAIL = r && r.email;
+                    bootApp_(r && r.db ? r.db : null);
+                })
+                .catch(bootFailed_);
+        }
+
+        function handleSignIn_(response) {
+            ID_TOKEN = response.credential;
+            loadData_();
+        }
+        window.onload = function() {
+            if (!window.google || !google.accounts || !google.accounts.id) {
+                document.getElementById('signInScreen').style.display = 'flex';
+                document.getElementById('signInMsg').textContent = 'Could not load Google Sign-In. Check your connection and reload.';
+                return;
+            }
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: handleSignIn_
+            });
+            document.getElementById('signInScreen').style.display = 'flex';
+            google.accounts.id.renderButton(document.getElementById('g_id_signin_container'), {
+                theme: 'outline',
+                size: 'large',
+                text: 'signin_with'
+            });
+            google.accounts.id.prompt();
+        };
+
+        /* ---------------- helpers ---------------- */
+        const $ = s => document.querySelector(s);
+        const yr = () => new Date().getFullYear();
+
+        function today() {
+            const d = new Date();
+            return d.toISOString().slice(0, 10);
+        }
+
+        function fdate(s) {
+            if (!s) return '';
+            const d = new Date(s + (s.length <= 10 ? 'T00:00:00' : ''));
+            return isNaN(d) ? s : d.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function rs(n) {
+            n = Number(n) || 0;
+            return '₹' + n.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[c]));
+        }
+
+        function toast(m) {
+            const t = $('#toast');
+            t.textContent = m;
+            t.classList.add('show');
+            clearTimeout(t._t);
+            t._t = setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
+        function client(id) {
+            return DB.clients.find(c => c.id === id);
+        }
+
+        function test(code) {
+            return DB.tests.find(t => t.code === code);
+        }
+
+        function samplePrice(s) {
+            return (s.unitPrice != null && s.unitPrice !== '') ? (+s.unitPrice || 0) : ((test(s.testCode) || {}).price || 0);
+        }
+
+        function sampleAmt(s) {
+            const price = samplePrice(s);
+            const qty = s.qty || 1;
+            const base = price * qty;
+            if (s.discType === 'amount') return Math.max(0, base - (+s.discount || 0));
+            return base * (1 - (+s.discount || 0) / 100);
+        }
+
+        function sampleDiscountAmt(s) {
+            const base = samplePrice(s) * (s.qty || 1);
+            return Math.max(0, base - sampleAmt(s));
+        }
+
+        function nextNum(kind) {
+            const k = kind + '-' + yr();
+            DB.counters[k] = (DB.counters[k] || 0) + 1;
+            return DB.counters[k];
+        }
+
+        function accId() {
+            return 'CGM-' + yr() + '-' + String(nextNum('CGM')).padStart(4, '0');
+        }
+
+        function cliId() {
+            DB.counters.CLI = (DB.counters.CLI || 0) + 1;
+            return 'CLI-' + String(DB.counters.CLI).padStart(3, '0');
+        }
+
+        function supplier(id) {
+            return (DB.suppliers || []).find(s => s.id === id);
+        }
+
+        function supId() {
+            DB.counters.SUP = (DB.counters.SUP || 0) + 1;
+            return 'SUP-' + String(DB.counters.SUP).padStart(3, '0');
+        }
+
+        function invId() {
+            return 'INV-' + yr() + '-' + String(nextNum('INV')).padStart(3, '0');
+        }
+
+        function sCls(s) {
+            return 's-' + String(s).replace(/\s+/g, '');
+        }
+
+        /* ---------------- modal ---------------- */
+        function openModal(html, wide) {
+            const m = $('#modal');
+            m.className = 'modal' + (wide ? ' wide' : '');
+            m.innerHTML = html;
+            $('#overlay').classList.add('show');
+        }
+
+        function closeModal() {
+            $('#overlay').classList.remove('show');
+        }
+        $('#overlay').addEventListener('click', e => {
+            if (e.target.id === 'overlay') closeModal();
+        });
+
+        /* ---------------- router ---------------- */
+        const VIEWS = {
+            dashboard: ['Dashboard', 'Overview of samples, workflow and billing'],
+            samples: ['Samples', 'Register, process and report'],
+            clients: ['Clients', 'Your customer master list'],
+            catalogue: ['Test Catalogue', 'Services and pricing'],
+            invoices: ['Invoices', 'Billing with automatic GST'],
+            quotations: ['Quotations', 'Price quotes for clients'],
+            purchaseorders: ['Purchase Orders', 'PO tracking and records'],
+            suppliers: ['Suppliers', 'Your vendor master list'],
+            settings: ['Settings', 'Lab details and GST'],
+            backup: ['Backup', 'Export and restore your data']
+        };
+        let current = 'dashboard';
+        const NAVORDER = ['dashboard', 'samples', 'clients', 'catalogue', 'invoices', 'quotations', 'purchaseorders', 'suppliers', 'settings', 'backup'];
+
+        function go(v) {
+            current = v;
+            // Update active button
+            const btns = document.querySelectorAll('#nav button');
+            btns.forEach((b, i) => b.classList.toggle('active', NAVORDER[i] === v));
+            $('#viewTitle').textContent = VIEWS[v][0];
+            $('#viewSub').textContent = VIEWS[v][1];
+            document.getElementById('side').classList.remove('open');
+            render();
+        }
+
+        function render() {
+            const r = {
+                dashboard: vDashboard,
+                samples: vSamples,
+                clients: vClients,
+                catalogue: vCatalogue,
+                invoices: vInvoices,
+                quotations: vQuotations,
+                purchaseorders: vPurchaseOrders,
+                suppliers: vSuppliers,
+                settings: vSettings,
+                backup: vBackup
+            }[current];
+            $('#topActions').innerHTML = topActions();
+            r();
+        }
+
+        function topActions() {
+            if (current === 'samples') return '<button class="btn primary" onclick="sampleForm()">+ Register sample</button>';
+            if (current === 'clients') return '<button class="btn primary" onclick="clientForm()">+ Add client</button>';
+            if (current === 'invoices') return '<button class="btn primary" onclick="invoiceForm()">+ Create invoice</button>';
+            if (current === 'quotations') return '<button class="btn primary" onclick="quotationForm()">+ Create quotation</button>';
+            if (current === 'purchaseorders') return '<button class="btn primary" onclick="poForm()">+ Create PO</button>';
+            if (current === 'suppliers') return '<button class="btn primary" onclick="supplierForm()">+ Add supplier</button>';
+            if (current === 'catalogue') return '<button class="btn primary" onclick="testForm()">+ Add test</button>';
+            return '';
+        }
+
+        /* ---------------- dashboard ---------------- */
+        function vDashboard() {
+            const s = DB.samples,
+                inv = DB.invoices;
+            const cnt = st => s.filter(x => x.status === st).length;
+            const processing = s.filter(x => ['QC', 'Extraction', 'PCR', 'Sequencing', 'Analysis'].includes(x.status)).length;
+            const outsourced = s.filter(x => x.outsourced).length;
+            const quotes = (DB.quotations || []).length;
+            const pos = (DB.purchaseorders || []).length;
+            const invoiced = inv.reduce((a, b) => a + (+b.total || 0), 0);
+            const paid = inv.filter(i => i.pay === 'Paid').reduce((a, b) => a + (+b.total || 0), 0);
+            const due = inv.filter(i => i.pay !== 'Paid').reduce((a, b) => a + (+b.total || 0), 0);
+            const recent = [...s].slice(-6).reverse();
+            $('#view').innerHTML = `
+   <div class="cards">
+     <div class="card"><div class="k">Total samples</div><div class="v">${s.length}</div></div>
+     <div class="card"><div class="k">In processing</div><div class="v">${processing}</div></div>
+     <div class="card"><div class="k">Report ready</div><div class="v">${cnt('Report Ready')}</div></div>
+     <div class="card"><div class="k">Delivered</div><div class="v">${cnt('Delivered')}</div></div>
+     <div class="card"><div class="k">Outsourced</div><div class="v">${outsourced}</div></div>
+     <div class="card" onclick="go('quotations')" style="cursor:pointer"><div class="k">Quotations</div><div class="v">${quotes}</div></div>
+     <div class="card" onclick="go('purchaseorders')" style="cursor:pointer"><div class="k">Purchase Orders</div><div class="v">${pos}</div></div>
+     <div class="card accent"><div class="k">Invoiced</div><div class="v rs">${rs(invoiced)}</div></div>
+     <div class="card"><div class="k">Outstanding</div><div class="v rs">${rs(due)}</div></div>
+   </div>
+   <div class="panel">
+     <div class="panel-head"><h3>Recent samples</h3>
+       <div class="tools"><button class="btn sm" onclick="go('samples')">View all</button></div></div>
+     ${recent.length?`<table><thead><tr><th>Accession</th><th>Client</th><th>Test</th><th>Status</th><th>Received</th></tr></thead><tbody>
+       ${recent.map(x=>`<tr onclick="sampleDetail('${x.acc}')" style="cursor:pointer">
+         <td><span class="acc">${esc(x.acc)}</span></td>
+         <td>${esc((client(x.clientId)||{}).name||'—')}</td>
+         <td>${esc((test(x.testCode)||{}).name||'—')}</td>
+         <td><span class="pill ${sCls(x.status)}">${esc(x.status)}</span></td>
+         <td>${fdate(x.dateReceived)}</td></tr>`).join('')}</tbody></table>`
+     :emptyState('No samples yet','Register your first sample to get started.',"sampleForm()","Register sample")}
+   </div>`;
+}
+function emptyState(big,sub,fn,label){return`<div class="empty"><div class="big">${big}</div>${sub}${fn?`<div style="margin-top:14px"><button class="btn primary" onclick="${fn}">${label}</button></div>`:''}</div>`;}
+
+/* ---------------- samples ---------------- */
+let sampleFilter={status:'',q:''};
+function vSamples(){
+  let rows=DB.samples.filter(x=>{
+    if(sampleFilter.status&&x.status!==sampleFilter.status)return false;
+    if(sampleFilter.q){const q=sampleFilter.q.toLowerCase();
+      const c=(client(x.clientId)||{}).name||'';const t=(test(x.testCode)||{}).name||'';
+      const sid=x.labCode||'';
+      if(!(x.acc+' '+sid+' '+c+' '+t+' '+(x.species||'')).toLowerCase().includes(q))return false;}
+    return true;}).reverse();
+  $('#view').innerHTML=`
+   <div class="panel">
+     <div class="panel-head">
+       <div class="filters">
+         <input type="search" id="sq" placeholder="Search accession, sample ID, client, species…" value="${esc(sampleFilter.q)}">
+         <select id="sf"><option value="">All statuses</option>${STATUSES.map(s=>`<option ${sampleFilter.status===s?'selected':''}>${s}</option>`).join('')}</select>
+       </div>
+       <div class="tools"><span class="hint">${rows.length} of ${DB.samples.length}</span>
+         ${sampleFilter.status?`<button class="btn sm" onclick="bulkEmailByStatus('${sampleFilter.status}')" title="Send update to all clients at this stage">✉ Bulk email (${sampleFilter.status})</button>`:''}
+       </div>
+     </div>
+     ${rows.length?`<table><thead><tr><th>Accession</th><th>Sample ID</th><th>Client</th><th>Test</th><th>Marker</th><th>Status</th><th>Received</th><th></th></tr></thead><tbody>
+       ${rows.map(x=>`<tr>
+         <td><span class="acc">${esc(x.acc)}</span>${x.outsourced?'<br><span class="pill s-Delivered" style="font-size:10px">Outsourced</span>':''}</td>
+         <td><b>${esc(x.labCode||'—')}</b></td>
+         <td>${esc((client(x.clientId)||{}).name||'—')}</td>
+         <td>${esc((test(x.testCode)||{}).name||'—')}</td>
+         <td>${esc(x.marker||'—')}</td>
+         <td><select class="statussel" onchange="setStatus('${x.acc}',this.value)">${STATUSES.map(s=>`<option ${x.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
+         <td>${fdate(x.dateReceived)}</td>
+         <td style="white-space:nowrap;text-align:right">
+           <button class="btn sm" onclick="sampleDetail('${x.acc}')">Open</button>
+           <button class="btn sm" onclick="emailClient('${x.acc}')" title="Email client">✉</button>
+           <button class="btn sm" onclick="printReport('${x.acc}')">${x.outsourced?'Ext. report':'Report'}</button>
+         </td></tr>`).join('')}</tbody></table>`
+     :emptyState('No matching samples','Adjust filters or register a new sample.',"sampleForm()","Register sample")}
+   </div>`;
+  $('#sq').oninput=e=>{
+  sampleFilter.q=e.target.value;
+  const pos=e.target.selectionStart;
+  clearTimeout(window._sd);
+  window._sd=setTimeout(()=>{
+    vSamples();
+    const input=$('#sq');
+    if(input){
+      input.focus();
+      input.setSelectionRange(pos,pos);
+    }
+  },180);
+};
+  $('#sf').onchange=e=>{sampleFilter.status=e.target.value;vSamples();};
+}
+function setStatus(acc,st){const s=DB.samples.find(x=>x.acc===acc);s.status=st;s.statusUpdated=today();
+  if((st==='Report Ready'||st==='Delivered')&&!s.dateReported)s.dateReported=today();persist();toast('Status → '+st);
+  if(DB.settings.autoEmail){const c=client(s.clientId)||{};if(c.email)emailClient(acc);}}
+
+function sampleForm(acc){
+  const s=acc?DB.samples.find(x=>x.acc===acc):null;
+  if(!DB.clients.length){toast('Add a client first');return clientForm();}
+  openModal(`
+   <div class="modal-head"><h3>${s?'Edit sample':'Register sample'}</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body">
+     <div class="grid2">
+       <div class="field"><label>Client</label><select id="f_client">${DB.clients.map(c=>`<option value="${c.id}" ${s&&s.clientId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+       <div class="field"><label>Sample type</label><input id="f_type" value="${s?esc(s.sampleType):''}" placeholder="e.g. Leaf tissue, Bacterial isolate"></div>
+       <div class="field"><label>Sample ID / lab code</label><input id="f_labcode" value="${s?esc(s.labCode):''}" placeholder="e.g. ND-SH-01"></div>
+       <div class="field"><label>Specimen (for report)</label><input id="f_specimen" value="${s?esc(s.specimen):''}" placeholder="defaults to sample type"></div>
+       <div class="field"><label>Test requested</label><select id="f_test" onchange="onTestPick()">${DB.tests.map(t=>`<option value="${t.code}" ${s&&s.testCode===t.code?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div>
+       <div class="field"><label>Marker</label><select id="f_marker">${MARKERS.map(m=>`<option ${s&&s.marker===m?'selected':''}>${m}</option>`).join('')}</select></div>
+       <div class="field"><label>No. of samples</label><input id="f_qty" type="number" min="1" value="${s?s.qty:1}" oninput="updSampleAmt()"></div>
+       <div class="field"><label>Assigned to</label><input id="f_assigned" value="${s?esc(s.assignedTo):''}"></div>
+       <div class="field"><label>Unit price (₹)</label><input id="f_price" type="number" min="0" step="0.01" value="${s?(s.unitPrice!=null&&s.unitPrice!==''?s.unitPrice:((test(s.testCode)||{}).price||0)):((DB.tests[0]||{}).price||0)}" oninput="updSampleAmt()"></div>
+              <div class="field"><label>Discount type</label><select id="f_disctype" onchange="updSampleAmt()"><option value="percent" ${(!s||s.discType!=='amount')?'selected':''}>Percentage (%)</option><option value="amount" ${(s&&s.discType==='amount')?'selected':''}>Amount (₹)</option></select></div>
+       <div class="field"><label>Discount value</label><input id="f_disc" type="number" min="0" value="${s?(s.discount||0):0}" oninput="updSampleAmt()"></div>
+       <div class="field full"><div class="hint">Unit price is taken from the test catalogue and pre-filled — adjust it or add a discount here, and the invoice will use this amount. <b>Line amount: <span id="f_amt">₹0.00</span></b></div></div>
+     </div>
+     <div class="field full"><label>Remarks</label><textarea id="f_remarks">${s?esc(s.remarks):''}</textarea></div>
+     ${s?`<div style="border-top:1px solid var(--line);margin:6px 0 14px"></div>
+     <div class="hint" style="margin-bottom:8px;font-weight:600;color:var(--purple)">Results (fill when ready)</div>
+     <div class="grid3">
+       <div class="field"><label>Species identified</label><input id="f_species" value="${esc(s.species)}"></div>
+       <div class="field"><label>% Identity</label><input id="f_identity" value="${esc(s.identity)}" placeholder="e.g. 99.6%"></div>
+       <div class="field"><label>Query coverage</label><input id="f_qcov" value="${esc(s.queryCoverage)}" placeholder="e.g. 100%"></div>
+       <div class="field"><label>E-value</label><input id="f_eval" value="${esc(s.eValue)}" placeholder="e.g. 0.0"></div>
+       <div class="field"><label>Closest GenBank accession</label><input id="f_genbank" value="${esc(s.genbank)}"></div>
+       <div class="field"><label>Sequence length (bp)</label><input id="f_seqlen" value="${esc(s.seqLength)}"></div>
+       <div class="field"><label>Status</label><select id="f_status">${STATUSES.map(st=>`<option ${s.status===st?'selected':''}>${st}</option>`).join('')}</select></div>
+       <div class="field"><label>Date reported</label><input id="f_reported" type="date" value="${s.dateReported||''}"></div>
+       <div class="field"><label>Registration ID</label><input id="f_regid" value="${esc(s.regId)}" placeholder="defaults to accession"></div>
+       <div class="field"><label>Date of analysis</label><input id="f_analysis" type="date" value="${s.analysisDate||''}"></div>
+     </div>
+     <div class="field full"><label>Sequence (FASTA)</label><textarea id="f_sequence" placeholder="Paste the consensus sequence (bases only)…">${esc(s.sequence)}</textarea></div>
+     <div class="field full"><label>Gel image (PCR product)</label>
+       <div style="display:flex;align-items:center;gap:10px">
+         <input type="file" id="f_gelfile" accept="image/*" onchange="loadGel('${s.acc}',event)">
+         <span id="gelstate" class="hint">${s.gelImage?'Image attached':'No image'}</span>
+         ${s.gelImage?`<button type="button" class="btn sm danger" onclick="clearGel('${s.acc}')">Remove</button>`:''}
+       </div>
+       ${s.gelImage?`<img src="${s.gelImage}" style="max-height:90px;margin-top:8px;border:1px solid var(--line);border-radius:6px">`:''}
+     </div>
+     <div class="field full"><label>Interpretation / Conclusion</label><textarea id="f_conclusion" placeholder="e.g. The submitted sample is identified as Oreochromis niloticus based on COI barcode sequence homology.">${esc(s.conclusion)}</textarea></div>
+     <div style="border-top:1px solid var(--line);margin:6px 0 12px"></div>
+     <div class="field full"><label><input type="checkbox" id="f_outsourced" ${s.outsourced?'checked':''} style="width:auto;margin-right:7px;vertical-align:-1px">Outsourced sample (analysed by an external lab)</label></div>
+     <div class="field full"><label>External lab name</label><input id="f_extlab" value="${esc(s.extLab)}" placeholder="e.g. Partner Genomics Pvt. Ltd."></div>
+     <div class="field full"><label>External report file (PDF or image)</label>
+       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+         <input type="file" id="f_extfile" accept="application/pdf,image/*" onchange="uploadExtReport('${s.acc}',event)">
+         ${s.hasExtReport?`<button type="button" class="btn sm primary" onclick="openExtReport('${s.acc}')">Open report</button>
+           <button type="button" class="btn sm danger" onclick="removeExtReport('${s.acc}')">Remove</button>
+           <span class="hint">${esc(s.extReportName||'attached')}</span>`:'<span class="hint">Upload the partner report once — open it any time.</span>'}
+       </div>
+     </div>
+     ${(s.comms&&s.comms.length)?`<div class="field full"><label>Client communication log</label>
+       <div class="hint">${s.comms.slice().reverse().map(x=>`${esc(x.stage)} — ${fdate(x.date)}`).join('<br>')}</div></div>`:''}`:''}
+   </div>
+   <div class="modal-foot">
+     ${s?`<button class="btn danger" onclick="delSample('${s.acc}')">Delete</button>
+     <button class="btn" onclick="emailClient('${s.acc}')">✉ Email client</button>`:''}
+     <button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveSample('${acc||''}')">${s?'Save changes':'Register'}</button>
+   </div>`,true);
+}
+function onTestPick(){const t=test($('#f_test').value)||{};const pf=$('#f_price');if(pf){pf.value=t.price||0;}updSampleAmt();}
+function updSampleAmt(){const el=$('#f_amt');if(!el)return;const price=+(($('#f_price')||{}).value)||0;const qty=+(($('#f_qty')||{}).value)||1;const discType=(($('#f_disctype')||{}).value)||'percent';const disc=+(($('#f_disc')||{}).value)||0;
+  const base=price*qty;const amt=discType==='amount'?Math.max(0,base-disc):base*(1-disc/100);
+  el.textContent=rs(amt);}
+function saveSample(acc){
+  const g=id=>{const el=$('#'+id);return el?el.value:undefined;};
+  if(acc){const s=DB.samples.find(x=>x.acc===acc);
+    Object.assign(s,{clientId:g('f_client'),sampleType:g('f_type'),testCode:g('f_test'),marker:g('f_marker'),
+      qty:+g('f_qty')||1,assignedTo:g('f_assigned'),remarks:g('f_remarks'),labCode:g('f_labcode'),
+      unitPrice:g('f_price'),discount:+g('f_disc')||0,discType:g('f_disctype')||'percent',
+      species:g('f_species'),identity:g('f_identity'),queryCoverage:g('f_qcov'),eValue:g('f_eval'),
+      genbank:g('f_genbank'),seqLength:g('f_seqlen'),conclusion:g('f_conclusion'),
+      regId:g('f_regid'),analysisDate:g('f_analysis'),specimen:g('f_specimen'),sequence:g('f_sequence'),
+      outsourced:(($('#f_outsourced')||{}).checked)||false,extLab:g('f_extlab'),
+      status:g('f_status'),dateReported:g('f_reported')});
+    if((s.status==='Report Ready'||s.status==='Delivered')&&!s.dateReported)s.dateReported=today();
+  }else{
+    DB.samples.push({acc:accId(),dateReceived:today(),clientId:g('f_client'),sampleType:g('f_type'),
+      testCode:g('f_test'),marker:g('f_marker'),qty:+g('f_qty')||1,assignedTo:g('f_assigned'),remarks:g('f_remarks'),
+      unitPrice:g('f_price'),discount:+g('f_disc')||0,discType:g('f_disctype')||'percent',
+      status:'Received',statusUpdated:today(),dateReported:'',species:'',identity:'',queryCoverage:'',eValue:'',genbank:'',seqLength:'',conclusion:'',
+      labCode:'',regId:'',analysisDate:'',specimen:'',sequence:'',gelImage:'',outsourced:false,extLab:'',outPages:[],invoiceNo:''});
+  }
+  persist();closeModal();toast(acc?'Sample updated':'Sample registered');render();
+}
+function confirmBox(message,onYes,yesLabel){
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(20,10,40,.45);display:flex;align-items:center;justify-content:center;z-index:99999';
+  wrap.innerHTML=`<div style="background:#fff;border-radius:14px;padding:22px 22px 18px;max-width:360px;width:90%;box-shadow:0 24px 70px rgba(0,0,0,.35);font-family:var(--sans)">
+    <div style="font-size:15px;line-height:1.5;margin-bottom:18px;color:#1a1430">${message}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" id="cb_no">Cancel</button>
+      <button class="btn danger" id="cb_yes">${yesLabel||'Delete'}</button></div></div>`;
+  document.body.appendChild(wrap);
+  const close=()=>wrap.remove();
+  wrap.addEventListener('click',e=>{if(e.target===wrap)close();});
+  wrap.querySelector('#cb_no').onclick=close;
+  wrap.querySelector('#cb_yes').onclick=()=>{close();onYes();};
+}
+function delSample(acc){confirmBox('Delete this sample? This cannot be undone.',()=>{DB.samples=DB.samples.filter(x=>x.acc!==acc);persist();closeModal();toast('Sample deleted');render();});}
+function sampleDetail(acc){sampleForm(acc);}
+function loadGel(acc,e){const f=e.target.files[0];if(!f)return;
+  if(f.size>1500000){toast('Please use an image under ~1.5 MB');return;}
+  const r=new FileReader();r.onload=()=>{const s=DB.samples.find(x=>x.acc===acc);s.gelImage=r.result;persist();
+    const st=$('#gelstate');if(st)st.textContent='Image attached';toast('Gel image attached');};r.readAsDataURL(f);}
+function clearGel(acc){const s=DB.samples.find(x=>x.acc===acc);s.gelImage='';persist();sampleForm(acc);toast('Image removed');}
+function addOutPage(acc,e){const f=e.target.files[0];if(!f)return;if(f.size>1800000){toast('Use an image under ~1.8 MB');return;}
+  const r=new FileReader();r.onload=()=>{const s=DB.samples.find(x=>x.acc===acc);s.outPages=s.outPages||[];s.outPages.push(r.result);persist();sampleForm(acc);toast('Page added');};r.readAsDataURL(f);}
+function removeOutPage(acc,i){const s=DB.samples.find(x=>x.acc===acc);s.outPages.splice(i,1);persist();sampleForm(acc);toast('Page removed');}
+
+/* ---- file store (IndexedDB) for external report files ---- */
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('clarigenomic_files',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function idbSet(k,v){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('files','readwrite');t.objectStore('files').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+async function idbGet(k){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('files','readonly');const q=t.objectStore('files').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+async function idbDel(k){const db=await idb();return new Promise(res=>{const t=db.transaction('files','readwrite');t.objectStore('files').delete(k);t.oncomplete=()=>res();});}
+
+function uploadExtReport(acc,e){const f=e.target.files[0];if(!f)return;if(f.size>9000000){toast('Use a file under ~9 MB');return;}
+  const r=new FileReader();r.onload=async()=>{try{await idbSet('extreport:'+acc,r.result);
+    const s=DB.samples.find(x=>x.acc===acc);s.hasExtReport=true;s.extReportName=f.name;s.extReportType=f.type;persist();sampleForm(acc);toast('External report attached');}
+    catch(_){toast('Could not save the file');}};r.readAsDataURL(f);}
+async function openExtReport(acc){const s=DB.samples.find(x=>x.acc===acc);const d=await idbGet('extreport:'+acc);
+  if(!d){toast('No external report attached');return;}
+  const w=window.open('','_blank');if(!w){toast('Allow pop-ups to view the report');return;}
+  const isPdf=/pdf/i.test(s.extReportType||'')||/\.pdf$/i.test(s.extReportName||'');
+  w.document.write(isPdf?`<title>${esc(s.extReportName||'Report')}</title><iframe src="${d}" style="position:fixed;inset:0;width:100%;height:100%;border:0"></iframe>`
+    :`<title>${esc(s.extReportName||'Report')}</title><img src="${d}" style="max-width:100%">`);}
+function removeExtReport(acc){confirmBox('Remove the attached external report?',async()=>{await idbDel('extreport:'+acc);
+  const s=DB.samples.find(x=>x.acc===acc);s.hasExtReport=false;s.extReportName='';s.extReportType='';persist();sampleForm(acc);toast('Report removed');},'Remove');}
+
+/* ---- stage-based client emails (opens your mail app) ---- */
+function emailTplFor(status){const e=DB.settings.email_tpls||{};
+  if(status==='Received')return e.received;if(status==='Report Ready')return e.ready;if(status==='Delivered')return e.delivered;return e.processing;}
+function emailClient(acc){const s=DB.samples.find(x=>x.acc===acc);const c=client(s.clientId)||{};const tpl=emailTplFor(s.status)||{};
+  const fill=t=>String(t||'').replace(/\{client\}/gi,c.name||'').replace(/\{accession\}/gi,s.labCode||s.acc)
+    .replace(/\{test\}/gi,(test(s.testCode)||{}).name||'').replace(/\{status\}/gi,s.status).replace(/\{lab\}/gi,DB.settings.labName);
+  if(!c.email){toast('This client has no email saved');return;}
+  const subj=fill(tpl.subject), body=fill(tpl.body);
+  const gurl=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(c.email)}&su=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  window.open(gurl,'_blank');s.comms=s.comms||[];s.comms.push({stage:s.status,date:today()});persist();toast('Gmail opened for '+s.status);}
+function bulkEmailByStatus(status){
+  const samples=DB.samples.filter(x=>x.status===status&&!x.outsourced);if(!samples.length){toast('No samples at this stage');return;}
+  const byClient={};samples.forEach(s=>{const c=client(s.clientId);if(c&&c.email){byClient[c.email]=byClient[c.email]||[];byClient[c.email].push(s);}});
+  const tpl=emailTplFor(status)||{};const lines=Object.entries(byClient).map(([email,samps])=>{
+    const c=client(samps[0].clientId);const fill=t=>String(t||'').replace(/\{client\}/gi,c.name||'').replace(/\{accession\}/gi,samps.map(s=>s.labCode||s.acc).join(', '))
+      .replace(/\{test\}/gi,samps.map(s=>(test(s.testCode)||{}).name||'').join(', ')).replace(/\{status\}/gi,status).replace(/\{lab\}/gi,DB.settings.labName);
+    const subj=fill(tpl.subject),body=fill(tpl.body);
+    samples.forEach(s=>{s.comms=s.comms||[];s.comms.push({stage:status,date:today()});});
+    return`To: ${email}\nSubject: ${subj}\n\n${body}\n${'—'.repeat(50)}\n`;}).join('\n');
+  const w=window.open('about:blank','bulk_email_draft');
+  if(w){const doc=`<title>Bulk email drafts</title><div style="font-family:sans-serif;padding:20px"><button id="cpy" style="margin-bottom:12px;padding:8px 14px;cursor:pointer">Copy all to clipboard</button><pre id="content" style="font-family:monospace;white-space:pre-wrap;word-wrap:break-word;background:#f6f6f6;padding:16px;border-radius:8px">`+esc(lines)+`</pre></div>`;
+    w.document.write(doc);w.document.close();
+    const btn=w.document.getElementById('cpy');
+    if(btn)btn.onclick=function(){const el=w.document.getElementById('content');const sel=w.getSelection();const range=w.document.createRange();range.selectNodeContents(el);sel.removeAllRanges();sel.addRange(range);w.document.execCommand('copy');w.alert('Copied! Now paste into a Gmail compose window.');};}
+  persist();toast('Bulk email draft opened — copy and paste into Gmail');}
+
+/* ---------------- clients ---------------- */
+function vClients(){
+  const rows=[...DB.clients].reverse();
+  $('#view').innerHTML=`<div class="panel">
+  <div class="panel-head">
+  <h3>Clients</h3>
+  <div class="filters">
+    <input type="search"
+           id="clientSearch"
+           placeholder="Search client ID, name, organisation, email…">
+  </div>
+  <div class="tools">
+    <span class="hint">${DB.clients.length} total</span>
+  </div>
+</div>
+    ${rows.length?`<table><thead><tr><th>ID</th><th>Name</th><th>Organisation</th><th>State</th><th>GSTIN</th><th>Contact</th><th></th></tr></thead><tbody>
+     ${rows.map(c=>`<tr><td><span class="acc">${esc(c.id)}</span></td><td>${esc(c.name)}</td><td>${esc(c.org)||'—'}</td>
+       <td>${esc(c.state)||'—'}</td><td>${esc(c.gstin)||'—'}</td><td>${esc(c.email||c.phone)||'—'}</td>
+       <td style="text-align:right"><button class="btn sm" onclick="clientForm('${c.id}')">Edit</button></td></tr>`).join('')}</tbody></table>`
+    :emptyState('No clients yet','Add a client to start registering their samples.',"clientForm()","Add client")}
+   </div>`;
+   $('#clientSearch').oninput=e=>{
+  const q=e.target.value.toLowerCase().trim();
+
+  document.querySelectorAll('#view tbody tr').forEach(row=>{
+    row.style.display =
+      row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+};
+}
+function clientForm(id){
+  const c=id?client(id):null;
+  openModal(`<div class="modal-head"><h3>${c?'Edit client':'Add client'}</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body"><div class="grid2">
+     <div class="field"><label>Client name</label><input id="c_name" value="${c?esc(c.name):''}"></div>
+     <div class="field"><label>Organisation</label><input id="c_org" value="${c?esc(c.org):''}"></div>
+     <div class="field"><label>Email</label><input id="c_email" value="${c?esc(c.email):''}"></div>
+     <div class="field"><label>Phone</label><input id="c_phone" value="${c?esc(c.phone):''}"></div>
+     <div class="field full"><label>Address</label><textarea id="c_addr">${c?esc(c.address):''}</textarea></div>
+     <div class="field"><label>State (for GST)</label><select id="c_state">${STATES.map(s=>`<option ${c&&c.state===s?'selected':(!c&&s==='Maharashtra'?'selected':'')}>${s}</option>`).join('')}</select></div>
+     <div class="field"><label>GSTIN</label><input id="c_gstin" value="${c?esc(c.gstin):''}"></div>
+   </div></div>
+   <div class="modal-foot">${c?`<button class="btn danger" onclick="delClient('${c.id}')">Delete</button>`:''}
+     <button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveClient('${id||''}')">${c?'Save':'Add client'}</button></div>`);
+}
+function saveClient(id){
+  const g=i=>$('#'+i).value.trim();
+  if(!g('c_name')){toast('Enter a client name');return;}
+  if(id){Object.assign(client(id),{name:g('c_name'),org:g('c_org'),email:g('c_email'),phone:g('c_phone'),address:g('c_addr'),state:g('c_state'),gstin:g('c_gstin')});}
+  else{DB.clients.push({id:cliId(),name:g('c_name'),org:g('c_org'),email:g('c_email'),phone:g('c_phone'),address:g('c_addr'),state:g('c_state'),gstin:g('c_gstin'),dateAdded:today()});}
+  persist();closeModal();toast(id?'Client updated':'Client added');render();
+}
+function delClient(id){confirmBox('Delete this client?',()=>{DB.clients=DB.clients.filter(c=>c.id!==id);persist();closeModal();toast('Client deleted');render();});}
+
+/* ---- suppliers master ---- */
+function vSuppliers(){
+  const rows=[...(DB.suppliers||[])].reverse();
+  $('#view').innerHTML=`<div class="panel">
+    <div class="panel-head"><h3>Suppliers</h3><div class="tools"><span class="hint">${(DB.suppliers||[]).length} total</span></div></div>
+    ${rows.length?`<table><thead><tr><th>ID</th><th>Supplier</th><th>GSTIN</th><th>Contact</th><th></th></tr></thead><tbody>
+     ${rows.map(s=>`<tr><td><span class="acc">${esc(s.id)}</span></td><td>${esc(s.name)}</td>
+       <td>${esc(s.gstin)||'—'}</td><td>${esc(s.email||s.phone)||'—'}</td>
+       <td style="text-align:right"><button class="btn sm" onclick="supplierForm('${s.id}')">Edit</button></td></tr>`).join('')}</tbody></table>`
+    :emptyState('No suppliers yet','Add a vendor so you can pick them on purchase orders.',"supplierForm()","Add supplier")}
+   </div>`;
+}
+function supplierForm(id){
+  const s=id?supplier(id):null;
+  openModal(`<div class="modal-head"><h3>${s?'Edit supplier':'Add supplier'}</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body"><div class="grid2">
+     <div class="field"><label>Supplier / vendor name</label><input id="su_name" value="${s?esc(s.name):''}" placeholder="e.g. Rainbow Scientific"></div>
+     <div class="field"><label>GSTIN</label><input id="su_gstin" value="${s?esc(s.gstin):''}"></div>
+     <div class="field"><label>Email</label><input id="su_email" value="${s?esc(s.email):''}"></div>
+     <div class="field"><label>Phone</label><input id="su_phone" value="${s?esc(s.phone):''}"></div>
+     <div class="field full"><label>Address</label><textarea id="su_addr">${s?esc(s.address):''}</textarea></div>
+   </div></div>
+   <div class="modal-foot">${s?`<button class="btn danger" onclick="delSupplier('${s.id}')">Delete</button>`:''}
+     <button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveSupplier('${id||''}')">${s?'Save':'Add supplier'}</button></div>`);
+}
+function saveSupplier(id){
+  const g=i=>$('#'+i).value.trim();
+  if(!g('su_name')){toast('Enter a supplier name');return;}
+  if(id){Object.assign(supplier(id),{name:g('su_name'),gstin:g('su_gstin'),email:g('su_email'),phone:g('su_phone'),address:g('su_addr')});}
+  else{DB.suppliers.push({id:supId(),name:g('su_name'),gstin:g('su_gstin'),email:g('su_email'),phone:g('su_phone'),address:g('su_addr'),dateAdded:today()});}
+  persist();closeModal();toast(id?'Supplier updated':'Supplier added');render();
+}
+function delSupplier(id){confirmBox('Delete this supplier?',()=>{DB.suppliers=DB.suppliers.filter(s=>s.id!==id);persist();closeModal();toast('Supplier deleted');render();});}
+function upsertSupplier(name,address){if(!name)return;const ex=(DB.suppliers||[]).find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(ex){ex.address=address||ex.address;}else{DB.suppliers.push({id:supId(),name,address:address||'',gstin:'',email:'',phone:'',dateAdded:today()});}}
+
+/* ---------------- catalogue ---------------- */
+function vCatalogue(){ 
+  $('#view').innerHTML=`<div class="panel"> 
+    <div class="panel-head">
+      <h3>Test catalogue</h3>
+      <div class="filters">
+        <input type="search"
+               id="testSearch"
+               placeholder="Search test code, test name, category…">
+      </div>
+      <div class="tools hint">Fill in your prices — invoices use them automatically</div>
+    </div> 
+    <table><thead><tr><th>Code</th><th>Test</th><th>Category</th><th class="num">Price</th><th class="num">TAT (d)</th><th>SAC</th><th></th></tr></thead><tbody> 
+     ${DB.tests.map(t=>`<tr><td><span class="acc">${esc(t.code)}</span></td><td>${esc(t.name)}</td><td>${esc(t.cat)}</td> 
+       <td class="num">${t.price?rs(t.price):'<span style="color:var(--warn)">set price</span>'}</td> 
+       <td class="num">${t.tat||'—'}</td><td>${esc(t.sac)}</td> 
+       <td style="text-align:right"><button class="btn sm" onclick="testForm('${t.code}')">Edit</button></td></tr>`).join('')} 
+    </tbody></table></div>`;
+
+  $('#testSearch').oninput=e=>{
+    const q=e.target.value.toLowerCase().trim();
+
+    document.querySelectorAll('#view tbody tr').forEach(row=>{
+      row.style.display =
+        row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  };
+}
+function testForm(code){
+  const t=code?test(code):null;
+  openModal(`<div class="modal-head"><h3>${t?'Edit test':'Add test'}</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body"><div class="grid2">
+     <div class="field"><label>Test code</label><input id="t_code" value="${t?esc(t.code):''}" ${t?'disabled':''}></div>
+     <div class="field"><label>Test name</label><input id="t_name" value="${t?esc(t.name):''}"></div>
+     <div class="field"><label>Category</label><input id="t_cat" value="${t?esc(t.cat):''}"></div>
+     <div class="field"><label>Unit price (₹)</label><input id="t_price" type="number" min="0" value="${t?t.price:''}"></div>
+     <div class="field"><label>TAT (days)</label><input id="t_tat" type="number" min="0" value="${t?t.tat:''}"></div>
+     <div class="field"><label>SAC code</label><input id="t_sac" value="${t?esc(t.sac):''}"></div>
+   </div></div>
+   <div class="modal-foot">${t?`<button class="btn danger" onclick="delTest('${t.code}')">Delete</button>`:''}
+     <button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveTest('${code||''}')">${t?'Save':'Add test'}</button></div>`);
+}
+function saveTest(code){
+  const g=i=>$('#'+i).value.trim();
+  if(code){Object.assign(test(code),{name:g('t_name'),cat:g('t_cat'),price:+g('t_price')||0,tat:+g('t_tat')||0,sac:g('t_sac')});}
+  else{if(!g('t_code')||!g('t_name')){toast('Code and name required');return;}
+    DB.tests.push({code:g('t_code'),name:g('t_name'),cat:g('t_cat'),price:+g('t_price')||0,tat:+g('t_tat')||0,sac:g('t_sac')});}
+  persist();closeModal();toast('Saved');render();
+}
+function delTest(code){confirmBox('Delete this test?',()=>{DB.tests=DB.tests.filter(t=>t.code!==code);persist();closeModal();toast('Deleted');render();});}
+
+/* ---------------- invoices ---------------- */
+function vInvoices(){
+  const rows=[...DB.invoices].reverse();
+
+  $('#view').innerHTML=`<div class="panel">
+    <div class="panel-head">
+      <h3>Invoices</h3>
+
+      <div class="filters">
+        <input type="search"
+               id="invoiceSearch"
+               placeholder="Search invoice number, client, payment…">
+      </div>
+
+      <div class="tools hint">${DB.invoices.length} total</div>
+    </div>
+
+    ${rows.length?`<table><thead><tr>
+      <th>Invoice</th>
+      <th>Date</th>
+      <th>Client</th>
+      <th class="num">Taxable</th>
+      <th class="num">GST</th>
+      <th class="num">Total</th>
+      <th>Payment</th>
+      <th></th>
+    </tr></thead><tbody>
+
+     ${rows.map(i=>`<tr>
+       <td><span class="acc">${esc(i.no)}</span></td>
+       <td>${fdate(i.date)}</td>
+       <td>${esc((client(i.clientId)||{}).name||'—')}</td>
+       <td class="num">${rs(i.taxable)}</td>
+       <td class="num">${rs((+i.cgst||0)+(+i.sgst||0)+(+i.igst||0))}</td>
+       <td class="num"><b>${rs(i.total)}</b></td>
+       <td>
+         <select class="statussel" onchange="setPay('${i.no}',this.value)">
+           ${['Pending','Paid','Partial'].map(p=>`<option ${i.pay===p?'selected':''}>${p}</option>`).join('')}
+         </select>
+       </td>
+       <td style="text-align:right;white-space:nowrap">
+         <button class="btn sm" onclick="printInvoice('${i.no}')">Print</button>
+         <button class="btn sm" onclick="editInvoiceNumber('${i.no}')">Edit no.</button>
+         <button class="btn sm danger" onclick="delInvoice('${i.no}')">Delete</button>
+       </td>
+     </tr>`).join('')}</tbody></table>`
+
+    :emptyState(
+      'No invoices yet',
+      'Create an invoice from selected samples.',
+      "invoiceForm()",
+      "Create invoice"
+    )}
+
+   </div>`;
+
+  $('#invoiceSearch').oninput=e=>{
+    const q=e.target.value.toLowerCase().trim();
+
+    document.querySelectorAll('#view tbody tr').forEach(row=>{
+      row.style.display =
+        row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  };
+}
+function setPay(no,p){DB.invoices.find(i=>i.no===no).pay=p;persist();toast('Payment: '+p);if(current==='dashboard')render();}
+function invoiceForm(){
+  if(!DB.clients.length){toast('Add a client first');return clientForm();}
+  const cid=DB.clients[0].id;
+  openModal(invoiceFormHtml(cid),true);
+}
+function invoiceFormHtml(cid){
+  const uninvoiced=DB.samples.filter(s=>s.clientId===cid&&!s.invoiceNo);
+  return`<div class="modal-head"><h3>Create invoice</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body">
+     <div class="field"><label>Client</label><select id="i_client" onchange="openModal(invoiceFormHtml(this.value),true)">
+       ${DB.clients.map(c=>`<option value="${c.id}" ${c.id===cid?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+     <div class="field"><label>Select samples to bill</label></div>
+     ${uninvoiced.length?uninvoiced.map(s=>{const t=test(s.testCode)||{};const amt=sampleAmt(s);const disc=+s.discount||0;
+       return`<label class="checkrow"><input type="checkbox" class="i_s" value="${s.acc}" data-amt="${amt}" checked onchange="recalcInv()">
+         <span class="meta"><span class="acc">${esc(s.acc)}</span> &nbsp;${esc(t.name||'')} ${s.qty>1?'× '+s.qty:''}${disc?` <span style="color:var(--ok)">(−${disc}%)</span>`:''}</span>
+         <span class="amt">${rs(amt)}</span></label>`;}).join('')
+       :`<div class="hint" style="padding:8px 0">No un-invoiced samples for this client. Register samples or set prices in the catalogue.</div>`}
+     <div style="border-top:1px solid var(--line);margin:12px 0"></div>
+     <div id="i_summary"></div>
+   </div>
+   <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveInvoice('${cid}')">Create invoice</button></div>`;
+}
+function gstFor(cid,taxable){
+  const c=client(cid)||{};const intra=DB.settings.gstEnabled&&c.state===DB.settings.homeState;
+  const inter=DB.settings.gstEnabled&&!intra;
+  return{cgst:intra?taxable*0.09:0,sgst:intra?taxable*0.09:0,igst:inter?taxable*0.18:0};
+}
+function recalcInv(){
+  const cid=$('#i_client').value;
+  let taxable=0;document.querySelectorAll('.i_s:checked').forEach(b=>taxable+=+b.dataset.amt);
+  const g=gstFor(cid,taxable);const total=taxable+g.cgst+g.sgst+g.igst;
+  const c=client(cid)||{};const intra=c.state===DB.settings.homeState;
+  $('#i_summary').innerHTML=`<div class="totbox">
+    <div class="r"><span>Taxable value</span><b>${rs(taxable)}</b></div>
+    ${DB.settings.gstEnabled?(intra?`<div class="r"><span>CGST 9%</span><span>${rs(g.cgst)}</span></div>
+      <div class="r"><span>SGST 9%</span><span>${rs(g.sgst)}</span></div>`
+      :`<div class="r"><span>IGST 18%</span><span>${rs(g.igst)}</span></div>`):''}
+    <div class="r grand"><span>Total</span><span>${rs(total)}</span></div></div>`;
+}
+function saveInvoice(cid){
+  const accs=[...document.querySelectorAll('.i_s:checked')].map(b=>b.value);
+  if(!accs.length){toast('Select at least one sample');return;}
+  let taxable=0;accs.forEach(a=>{const s=DB.samples.find(x=>x.acc===a);taxable+=sampleAmt(s);});
+  const g=gstFor(cid,taxable);const total=taxable+g.cgst+g.sgst+g.igst;
+  const no=invId();
+  DB.invoices.push({no,date:today(),clientId:cid,accessions:accs,taxable,cgst:g.cgst,sgst:g.sgst,igst:g.igst,total,pay:'Pending'});
+  accs.forEach(a=>{DB.samples.find(x=>x.acc===a).invoiceNo=no;});
+  persist();closeModal();toast('Invoice '+no+' created');go('invoices');
+}
+function delInvoice(no){confirmBox('Delete this invoice? Samples will be billable again.',()=>{
+  const inv=DB.invoices.find(i=>i.no===no);(inv.accessions||[]).forEach(a=>{const s=DB.samples.find(x=>x.acc===a);if(s)s.invoiceNo='';});
+  const y=yr();const prefix='INV-'+y+'-';const key='INVNUM-'+y;
+  if(inv&&inv.no&&inv.no.indexOf(prefix)===0){
+    const n=parseInt(inv.no.slice(prefix.length),10);
+    if(n===DB.counters[key])DB.counters[key]--;
+  }
+  DB.invoices=DB.invoices.filter(i=>i.no!==no);persist();toast('Invoice deleted');render();});}
+function editInvoiceNumber(no){
+  const inv=DB.invoices.find(i=>i.no===no);if(!inv)return;
+  const nn=prompt('Enter invoice number:',inv.no);
+  if(nn===null)return;
+  const trimmed=nn.trim();
+  if(!trimmed){toast('Invoice number cannot be empty');return;}
+  if(trimmed!==inv.no && DB.invoices.some(i=>i.no===trimmed)){toast('That invoice number is already in use');return;}
+  const oldNo=inv.no;inv.no=trimmed;
+  (inv.accessions||[]).forEach(a=>{const s=DB.samples.find(x=>x.acc===a);if(s&&s.invoiceNo===oldNo)s.invoiceNo=trimmed;});
+  persist();toast('Invoice number updated');render();
+}
+// keep summary live after first paint
+const _vInv=vInvoices;
+
+/* ---- quotations ---- */
+function vQuotations(){
+  const rows=[...(DB.quotations||[])].reverse();
+
+  $('#view').innerHTML=`<div class="panel">
+    <div class="panel-head">
+      <h3>Quotations</h3>
+
+      <div class="filters">
+        <input type="search"
+               id="quotationSearch"
+               placeholder="Search quotation number, client, status…">
+      </div>
+
+      <div class="tools hint">${DB.quotations.length} total</div>
+    </div>
+
+    ${rows.length?`<table><thead><tr>
+      <th>Quote No</th>
+      <th>Date</th>
+      <th>Client</th>
+      <th class="num">Amount</th>
+      <th>Status</th>
+      <th></th>
+    </tr></thead><tbody>
+
+     ${rows.map(q=>`<tr>
+       <td><span class="acc">${esc(q.no)}</span></td>
+       <td>${fdate(q.date)}</td>
+       <td>${esc((client(q.clientId)||{}).name||'—')}</td>
+       <td class="num"><b>${rs(q.total)}</b></td>
+       <td>
+         <select class="statussel" onchange="setQuotationStatus('${q.no}',this.value)">
+           ${['Draft','Sent','Accepted','Expired'].map(st=>`<option ${q.status===st?'selected':''}>${st}</option>`).join('')}
+         </select>
+       </td>
+       <td style="text-align:right;white-space:nowrap">
+         <button class="btn sm" onclick="quotationForm('${q.no}')">Edit</button>
+         <button class="btn sm" onclick="printQuotation('${q.no}')">Print</button>
+         <button class="btn sm danger" onclick="delQuotation('${q.no}')">Delete</button>
+       </td>
+     </tr>`).join('')}</tbody></table>`
+
+    :emptyState(
+      'No quotations yet',
+      'Create a quotation to send a price quote.',
+      "quotationForm()",
+      "Create quotation"
+    )}
+
+   </div>`;
+
+  $('#quotationSearch').oninput=e=>{
+    const q=e.target.value.toLowerCase().trim();
+
+    document.querySelectorAll('#view tbody tr').forEach(row=>{
+      row.style.display =
+        row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  };
+}
+function numToWords(n){n=Math.round(+n||0);if(n===0)return'Zero';
+  const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two=x=>x<20?a[x]:b[Math.floor(x/10)]+(x%10?' '+a[x%10]:'');
+  const three=x=>{const h=Math.floor(x/100),r=x%100;return(h?a[h]+' Hundred'+(r?' ':''):'')+(r?two(r):'');};
+  let res='';const cr=Math.floor(n/10000000);n%=10000000;const lk=Math.floor(n/100000);n%=100000;const th=Math.floor(n/1000);n%=1000;
+  if(cr)res+=three(cr)+' Crore ';if(lk)res+=three(lk)+' Lakh ';if(th)res+=three(th)+' Thousand ';if(n)res+=three(n);
+  return res.trim();}
+function fyOf(dateStr){const d=new Date(dateStr);const y=d.getFullYear();const start=d.getMonth()>=3?y:y-1;
+  return String(start%100).padStart(2,'0')+'-'+String((start+1)%100).padStart(2,'0');}
+function lineAmt(it){return (+it.price||0)*(+it.qty||0)*(1-(+it.disc||0)/100);}
+function quoteDesc(t){return 'Service Name: '+(t.name||'')+(t.cat?' ('+t.cat+')':'');}
+
+let QITEMS=[];
+function quotationForm(no){
+  if(!DB.clients.length){toast('Add a client first');return clientForm();}
+  const q=no?DB.quotations.find(x=>x.no===no):null;
+  if(q && q.items && q.items.length){QITEMS=q.items.map(it=>({...it}));}
+  else if(q && q.tests && q.tests.length){QITEMS=q.tests.map(code=>{const t=test(code)||{};return{desc:quoteDesc(t),price:t.price||0,qty:1,disc:0};});}
+  else QITEMS=[{desc:'',price:0,qty:1,disc:0}];
+  openModal(quotationFormHtml(q),true);
+}
+function quotationFormHtml(q){
+  const cid=q?q.clientId:DB.clients[0].id;const s=DB.settings;
+  const fy=fyOf(today());
+  const seq=(DB.quotations||[]).filter(x=>(x.ref||'').indexOf('/'+fy+'/')>-1).length+1;
+  const ref=q?q.ref:('CGMQT/'+fy+'/'+String(seq).padStart(3,'0'));
+  return`<div class="modal-head"><h3>${q?'Edit':'Create'} quotation</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body">
+     <div class="grid2">
+       <div class="field"><label>Client</label><select id="q_client">${DB.clients.map(x=>`<option value="${x.id}" ${x.id===cid?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
+       <div class="field"><label>Date</label><input id="q_date" type="date" value="${q?q.date:today()}"></div>
+       <div class="field"><label>Ref No.</label><input id="q_ref" value="${esc(ref)}"></div>
+       <div class="field"><label>Subject</label><input id="q_subject" value="${esc(q?q.subject:s.quoteSubject)}"></div>
+       <div class="field"><label>GST rate</label><select id="q_gst" onchange="recalcQuot()">${[['0','No GST'],['5','5%'],['12','12%'],['18','18%']].map(([v,l])=>`<option value="${v}" ${String(q?(q.gstRate||0):(DB.settings.gstEnabled?18:0))===v?'selected':''}>${l}</option>`).join('')}</select></div>
+     </div>
+     <div class="field full"><label>Line items — edit description, price, quantity and discount</label></div>
+     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px" class="qedit">
+       <thead><tr style="text-align:left"><th style="width:24px">#</th><th>Description</th><th style="width:80px">Price ₹</th><th style="width:50px">Qty</th><th style="width:60px">Disc %</th><th style="width:90px">Amount</th><th></th></tr></thead>
+       <tbody id="qitems"></tbody></table></div>
+     <div style="display:flex;gap:8px;margin:8px 0">
+       <button type="button" class="btn sm" onclick="addQItem()">+ Add line</button>
+       <select class="btn sm" onchange="if(this.value){addQFromTest(this.value);this.value=''}" style="max-width:220px"><option value="">+ Add from catalogue…</option>${DB.tests.map(t=>`<option value="${t.code}">${esc(t.name)} (${rs(t.price||0)})</option>`).join('')}</select>
+     </div>
+     <div id="q_summary"></div>
+     <div class="field full"><label>Note (printed below the table)</label><textarea id="q_note">${esc(q?q.note:s.quoteNote)}</textarea></div>
+     <div class="field full"><label>Terms &amp; Conditions (one per line)</label><textarea id="q_terms" style="min-height:110px">${esc(q?(q.terms||[]).join('\n'):s.quoteTerms)}</textarea></div>
+   </div>
+   <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="saveQuotation('${q?q.no:''}')">${q?'Save changes':'Create quotation'}</button></div>`;
+}
+function renderQItems(){
+  const tb=$('#qitems');if(!tb)return;
+  tb.innerHTML=QITEMS.map((it,i)=>`<tr style="border-bottom:1px solid var(--line)">
+    <td>${i+1}</td>
+    <td><textarea rows="2" style="width:100%;font-size:12px;font-family:var(--sans)" oninput="QITEMS[${i}].desc=this.value">${esc(it.desc)}</textarea></td>
+    <td><input type="number" min="0" step="0.01" value="${it.price}" style="width:78px" oninput="QITEMS[${i}].price=+this.value||0;recalcQuot()"></td>
+    <td><input type="number" min="0" value="${it.qty}" style="width:48px" oninput="QITEMS[${i}].qty=+this.value||0;recalcQuot()"></td>
+    <td><input type="number" min="0" max="100" value="${it.disc}" style="width:50px" oninput="QITEMS[${i}].disc=+this.value||0;recalcQuot()"></td>
+    <td class="qla">${rs(lineAmt(it))}</td>
+    <td><button type="button" class="btn sm danger" onclick="QITEMS.splice(${i},1);renderQItems();recalcQuot()">×</button></td></tr>`).join('');
+  recalcQuot();
+}
+function addQItem(){QITEMS.push({desc:'',price:0,qty:1,disc:0});renderQItems();}
+function addQFromTest(code){const t=test(code)||{};QITEMS.push({desc:quoteDesc(t),price:t.price||0,qty:1,disc:0});renderQItems();}
+function quotTotals(){
+  let subtotal=0,discountTotal=0;
+  QITEMS.forEach(it=>{const base=(+it.price||0)*(+it.qty||0);subtotal+=base;discountTotal+=base*((+it.disc||0)/100);});
+  const taxable=subtotal-discountTotal;
+  const rate=+(($('#q_gst')||{}).value)||0;const gst=taxable*rate/100;
+  return{subtotal,discountTotal,taxable,rate,gst,total:taxable+gst};
+}
+function recalcQuot(){
+  if(!$('#q_summary'))return;
+  document.querySelectorAll('#qitems tr').forEach((tr,i)=>{const cell=tr.querySelector('.qla');if(cell&&QITEMS[i])cell.textContent=rs(lineAmt(QITEMS[i]));});
+  const t=quotTotals();
+  $('#q_summary').innerHTML=`<div class="totbox">
+    <div class="r"><span>Subtotal</span><b>${rs(t.subtotal)}</b></div>
+    ${t.discountTotal?`<div class="r"><span>Discount</span><span>– ${rs(t.discountTotal)}</span></div>`:''}
+    <div class="r"><span>Taxable value</span><span>${rs(t.taxable)}</span></div>
+    ${t.rate?`<div class="r"><span>GST (${t.rate}%)</span><span>${rs(t.gst)}</span></div>`:''}
+    <div class="r grand"><span>Total</span><span>${rs(t.total)}</span></div>
+    <div class="r" style="font-size:11px;color:var(--muted)"><span>In words</span><span>Rupees ${numToWords(t.total)} only</span></div></div>`;
+}
+function saveQuotation(no){
+  const items=QITEMS.filter(it=>(it.desc||'').trim()||+it.price);
+  if(!items.length){toast('Add at least one line item');return;}
+  const t=quotTotals();const cid=$('#q_client').value;
+  const obj={no:no||('QT-'+Date.now().toString().slice(-6)),ref:$('#q_ref').value,date:$('#q_date').value,clientId:cid,
+    subject:$('#q_subject').value,items,note:$('#q_note').value,terms:$('#q_terms').value.split('\n').filter(x=>x.trim()),
+    gstRate:t.rate,subtotal:t.subtotal,discountTotal:t.discountTotal,taxable:t.taxable,gst:t.gst,total:t.total,
+    status:no?(DB.quotations.find(q=>q.no===no)||{}).status||'Draft':'Draft'};
+  if(no){const i=DB.quotations.findIndex(q=>q.no===no);DB.quotations[i]=obj;}else DB.quotations.push(obj);
+  persist();closeModal();toast('Quotation saved');go('quotations');
+}
+function setQuotationStatus(no,st){DB.quotations.find(q=>q.no===no).status=st;persist();toast('Status: '+st);}
+function delQuotation(no){confirmBox('Delete this quotation?',()=>{DB.quotations=DB.quotations.filter(q=>q.no!==no);persist();toast('Quotation deleted');go('quotations');});}
+function printQuotation(no){
+  const q=DB.quotations.find(x=>x.no===no);const c=client(q.clientId)||{};const s=DB.settings;
+  const rows=q.items.map((it,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(it.desc).replace(/\n/g,'<br>')}</td>
+    <td>${(+it.price).toFixed(2)}</td><td>${it.qty}${(+it.disc)?`<br><span style="font-size:9px">(-${it.disc}%)</span>`:''}</td><td>${lineAmt(it).toFixed(2)}</td></tr>`).join('');
+  const span=`colspan="2"`;
+  const hasDisc=(+q.discountTotal)>0;
+  $('#printArea').innerHTML=`<div class="doc qdoc"${docStyle()}>
+    ${brandHead()}
+    <div class="qref"><span>Ref No.: ${esc(q.ref||q.no)}</span><span>&nbsp;&nbsp;&nbsp;&nbsp;Date: ${fdate(q.date)}</span></div>
+    <div class="qtitle">QUOTATION</div>
+    <div class="qto">To,<br><b>${esc(c.name||'')}</b>,${c.org?'<br>'+esc(c.org):''}${c.address?'<br>'+esc(c.address):''}</div>
+    <div class="qsub"><u><b>Subject:- ${esc(q.subject||'Quotation')}</b></u></div>
+    <div>Dear Sir/Madam,</div>
+    <p class="qintro">Thank you for choosing ${esc(s.labName)}. Please find below our quotation for the requested services.</p>
+    <table class="qtable"><thead><tr><th>Sr. No.</th><th>Description and Specifications</th><th>Price (Rs.)</th><th>Quantity</th><th>Amount (INR)</th></tr></thead>
+      <tbody>${rows}
+        ${hasDisc?`<tr><td ${span}></td><td class="tr">Subtotal</td><td></td><td>${q.subtotal.toFixed(2)}</td></tr>
+        <tr><td ${span}></td><td class="tr">Discount</td><td></td><td>– ${q.discountTotal.toFixed(2)}</td></tr>`:''}
+        <tr><td ${span}></td><td class="tr">Total</td><td></td><td>${q.taxable.toFixed(2)}</td></tr>
+        ${(+q.gstRate)?`<tr><td ${span}></td><td class="tr">GST (${q.gstRate}%)</td><td></td><td>${q.gst.toFixed(2)}</td></tr>`:''}
+        <tr><td class="words" colspan="3">(In words: Rupees ${numToWords(q.total)} only)</td><td class="tr">Total</td><td>${q.total.toFixed(2)}</td></tr>
+      </tbody></table>
+    ${q.note?`<div class="qnote">Note: ${esc(q.note)}</div>`:''}
+    <div class="qterms-h">Terms &amp; Conditions:</div>
+    <ol class="qterms">${(q.terms||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
+    <div class="qsign">${s.signatureImg?`<img src="${s.signatureImg}">`:''}Director</div>
+    <div class="qfoot">${esc(s.labName)} | ${esc(s.address)} | ${esc(s.email)}</div>
+  </div>`;
+  doPrint();
+}
+
+/* ---- purchase orders (supply orders to vendors) ---- */
+function vPurchaseOrders(){
+  const rows=[...(DB.purchaseorders||[])].reverse();
+  $('#view').innerHTML=`<div class="panel">
+  <div class="panel-head">
+  <h3>Purchase Orders</h3>
+  <div class="filters">
+    <input type="search"
+           id="poSearch"
+           placeholder="Search PO, supplier, category, status…">
+  </div>
+  <div class="tools hint">${(DB.purchaseorders||[]).length} total</div>
+</div>
+    ${rows.length?`<table><thead><tr><th>Ref No</th><th>Date</th><th>Supplier</th><th>Category</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody>
+     ${rows.map(p=>`<tr><td><span class="acc">${esc(p.ref||p.no)}</span></td><td>${fdate(p.date)}</td>
+       <td>${esc((p.supplier&&p.supplier.name)||'—')}</td>
+       <td>${esc(p.category||'Equipment')}</td>
+       <td class="num"><b>${rs(p.total)}</b></td>
+       <td><select class="statussel" onchange="setPOStatus('${p.no}',this.value)">${['Issued','Delivered','Installed','Completed','Cancelled'].map(st=>`<option ${p.status===st?'selected':''}>${st}</option>`).join('')}</select></td>
+       <td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="poForm('${p.no}')">Edit</button> <button class="btn sm" onclick="printPO('${p.no}')">Print</button> <button class="btn sm danger" onclick="delPO('${p.no}')">Delete</button></td></tr>`).join('')}</tbody></table>`
+    :emptyState('No purchase orders yet','Create a supply order to a vendor for instruments, consumables or chemicals.',"poForm()","Create PO")}
+      </div>`;
+
+  $('#poSearch').oninput=e=>{
+    const q=e.target.value.toLowerCase().trim();
+
+    document.querySelectorAll('#view tbody tr').forEach(row=>{
+      row.style.display =
+        row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  };
+}
+const PO_CAT={Equipment:{seg:'EQ',subj:'Supply Order for laboratory equipment'},Consumable:{seg:'CON',subj:'Supply Order for laboratory consumables'},Chemical:{seg:'CHM',subj:'Supply Order for laboratory chemicals'}};
+let PITEMS=[];
+function poForm(no){
+  const p=no?DB.purchaseorders.find(x=>x.no===no):null;
+  PITEMS = p&&p.items ? p.items.map(it=>({...it})) : [{desc:'',price:0,qty:1}];
+  openModal(poFormHtml(p),true);
+}
+function poFormHtml(p){
+  const s=DB.settings;const cat=p?p.category:'Equipment';const fy=fyOf(today());
+  const seg=(PO_CAT[cat]||PO_CAT.Equipment).seg;
+  const seq=(DB.purchaseorders||[]).filter(x=>(x.ref||'').indexOf('/'+fy+'/')>-1).length+1;
+  const ref=p?p.ref:('CGM/'+seg+'/'+fy+'/'+String(seq).padStart(3,'0'));
+  const sup=p?p.supplier||{}:{};
+  return`<div class="modal-head"><h3>${p?'Edit':'Create'} purchase order</h3><button class="x" onclick="closeModal()">×</button></div>
+   <div class="modal-body">
+     <div class="grid2">
+       <div class="field"><label>Category</label><input id="p_cat" list="pcatlist" value="${esc(cat)}" onchange="poCatChange()" placeholder="Equipment / Consumable / Chemical / type your own">
+         <datalist id="pcatlist">${Object.keys(PO_CAT).map(k=>`<option value="${k}">`).join('')}<option value="Glassware"><option value="Service"><option value="Other"></datalist></div>
+       <div class="field"><label>Date</label><input id="p_date" type="date" value="${p?p.date:today()}"></div>
+       <div class="field"><label>Ref No.</label><input id="p_ref" value="${esc(ref)}"></div>
+       <div class="field"><label>Subject</label><input id="p_subject" value="${esc(p?p.subject:(PO_CAT[cat]||PO_CAT.Equipment).subj)}"></div>
+       <div class="field full"><label>Pick saved supplier</label><select id="p_suppick" onchange="poPickSupplier()">
+         <option value="">— Select a saved supplier (or type a new one below) —</option>
+         ${(DB.suppliers||[]).map(su=>`<option value="${su.id}">${esc(su.name)}</option>`).join('')}</select></div>
+       <div class="field"><label>Supplier / vendor name</label><input id="p_supname" value="${esc(sup.name||'')}" placeholder="e.g. Rainbow Scientific"></div>
+       <div class="field"><label>GST rate</label><select id="p_gst" onchange="recalcPO()">${[['0','No GST'],['5','5%'],['12','12%'],['18','18%']].map(([v,l])=>`<option value="${v}" ${String(p?(p.gstRate||0):(DB.settings.gstEnabled?18:0))===v?'selected':''}>${l}</option>`).join('')}</select></div>
+       <div class="field full"><label>Supplier address</label><textarea id="p_supaddr" placeholder="Full address of the supplier">${esc(sup.address||'')}</textarea></div>
+     </div>
+     <div class="field full"><label>Items — instruments, consumables or chemicals (free text)</label></div>
+     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px" class="qedit">
+       <thead><tr style="text-align:left"><th style="width:24px">#</th><th>Description &amp; specifications</th><th style="width:90px">Price ₹</th><th style="width:50px">Qty</th><th style="width:90px">Amount</th><th></th></tr></thead>
+       <tbody id="pitems"></tbody></table></div>
+     <button type="button" class="btn sm" onclick="addPItem()" style="margin:8px 0">+ Add item</button>
+     <div id="p_summary"></div>
+     <div class="field full"><label>Terms &amp; Conditions (one per line)</label><textarea id="p_terms" style="min-height:150px">${esc(p?(p.terms||[]).join('\n'):s.poTerms)}</textarea></div>
+   </div>
+   <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
+     <button class="btn primary" onclick="savePO('${p?p.no:''}')">${p?'Save changes':'Create PO'}</button></div>`;
+}
+function poCatChange(){const cat=$('#p_cat').value.trim();const c=PO_CAT[cat]||{seg:(cat?cat.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'GEN':'GEN'),subj:'Supply Order for '+(cat?cat.toLowerCase():'laboratory items')};
+  const fy=fyOf($('#p_date').value||today());const seq=(DB.purchaseorders||[]).filter(x=>(x.ref||'').indexOf('/'+fy+'/')>-1).length+1;
+  $('#p_ref').value='CGM/'+c.seg+'/'+fy+'/'+String(seq).padStart(3,'0');$('#p_subject').value=c.subj;}
+function poPickSupplier(){const su=supplier($('#p_suppick').value);if(!su)return;$('#p_supname').value=su.name||'';$('#p_supaddr').value=su.address||'';}
+function renderPItems(){
+  const tb=$('#pitems');if(!tb)return;
+  tb.innerHTML=PITEMS.map((it,i)=>`<tr style="border-bottom:1px solid var(--line)">
+    <td>${i+1}</td>
+    <td><textarea rows="2" style="width:100%;font-size:12px;font-family:var(--sans)" oninput="PITEMS[${i}].desc=this.value">${esc(it.desc)}</textarea></td>
+    <td><input type="number" min="0" step="0.01" value="${it.price}" style="width:86px" oninput="PITEMS[${i}].price=+this.value||0;recalcPO()"></td>
+    <td><input type="number" min="0" value="${it.qty}" style="width:48px" oninput="PITEMS[${i}].qty=+this.value||0;recalcPO()"></td>
+    <td class="pla">${rs((+it.price||0)*(+it.qty||0))}</td>
+    <td><button type="button" class="btn sm danger" onclick="PITEMS.splice(${i},1);renderPItems();recalcPO()">×</button></td></tr>`).join('');
+  recalcPO();
+}
+function addPItem(){PITEMS.push({desc:'',price:0,qty:1});renderPItems();}
+function poTotals(){let subtotal=0;PITEMS.forEach(it=>subtotal+=(+it.price||0)*(+it.qty||0));
+  const rate=+(($('#p_gst')||{}).value)||0;const gst=subtotal*rate/100;return{subtotal,rate,gst,total:subtotal+gst};}
+function recalcPO(){
+  if(!$('#p_summary'))return;
+  document.querySelectorAll('#pitems tr').forEach((tr,i)=>{const cell=tr.querySelector('.pla');if(cell&&PITEMS[i])cell.textContent=rs((+PITEMS[i].price||0)*(+PITEMS[i].qty||0));});
+  const t=poTotals();
+  $('#p_summary').innerHTML=`<div class="totbox">
+    <div class="r"><span>Total</span><b>${rs(t.subtotal)}</b></div>
+    ${t.rate?`<div class="r"><span>GST (${t.rate}%)</span><span>${rs(t.gst)}</span></div>`:''}
+    <div class="r grand"><span>Grand total</span><span>${rs(t.total)}</span></div>
+    <div class="r" style="font-size:11px;color:var(--muted)"><span>In words</span><span>Rupees ${numToWords(t.total)} only</span></div></div>`;
+}
+function savePO(no){
+  const items=PITEMS.filter(it=>(it.desc||'').trim()||+it.price);
+  if(!items.length){toast('Add at least one item');return;}
+  const t=poTotals();const supName=$('#p_supname').value,supAddr=$('#p_supaddr').value;
+  if(!$('#p_suppick').value)upsertSupplier(supName,supAddr);
+  const obj={no:no||('PO-'+Date.now().toString().slice(-6)),ref:$('#p_ref').value,date:$('#p_date').value,
+    category:$('#p_cat').value,subject:$('#p_subject').value,
+    supplier:{name:supName,address:supAddr},items,gstRate:t.rate,
+    terms:$('#p_terms').value.split('\n').filter(x=>x.trim()),
+    subtotal:t.subtotal,gst:t.gst,total:t.total,
+    status:no?(DB.purchaseorders.find(p=>p.no===no)||{}).status||'Issued':'Issued'};
+  if(no){const i=DB.purchaseorders.findIndex(p=>p.no===no);DB.purchaseorders[i]=obj;}else DB.purchaseorders.push(obj);
+  persist();closeModal();toast('Purchase order saved');go('purchaseorders');
+}
+function setPOStatus(no,st){DB.purchaseorders.find(p=>p.no===no).status=st;persist();toast('Status: '+st);}
+function delPO(no){confirmBox('Delete this purchase order?',()=>{DB.purchaseorders=DB.purchaseorders.filter(p=>p.no!==no);persist();toast('PO deleted');go('purchaseorders');});}
+function printPO(no){
+  const p=DB.purchaseorders.find(x=>x.no===no);const s=DB.settings;const sup=p.supplier||{};
+  const head=brandHead();
+  const foot=`<div class="qfoot">${esc(s.labName)} | ${esc(s.address)} | ${esc(s.email)}</div>`;
+  const rows=p.items.map((it,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(it.desc).replace(/\n/g,'<br>')}</td>
+    <td>${(+it.price).toFixed(2)}</td><td>${it.qty}</td><td>${((+it.price||0)*(+it.qty||0)).toFixed(2)}</td></tr>`).join('');
+  const terms=(p.terms||[]).map(x=>{const i=x.indexOf(':');return i>0?`<li><b>${esc(x.slice(0,i))}:</b>${esc(x.slice(i+1))}</li>`:`<li>${esc(x)}</li>`;}).join('');
+  $('#printArea').innerHTML=`<div class="doc qdoc"${docStyle()}>
+    ${head}
+    <div class="qref"><span>Ref No.: ${esc(p.ref||p.no)}</span><span>&nbsp;&nbsp;&nbsp;&nbsp;Date: ${fdate(p.date)}</span></div>
+    <div class="qto">To,<br><b>${esc(sup.name||'')}</b>,${sup.address?'<br>'+esc(sup.address).replace(/\n/g,'<br>'):''}</div>
+    <div class="qsub"><u><b>Subject:- ${esc(p.subject||'Supply Order')}</b></u></div>
+    <div>Sir/Madam,</div>
+    <p class="qintro">As per the rates approved, you are requested to supply the following articles on the terms and conditions mentioned herein.</p>
+    <table class="qtable"><thead><tr><th>Sr. No.</th><th>Description and Specifications</th><th>Price (Rs.)</th><th>Quantity</th><th>Amount (INR)</th></tr></thead>
+      <tbody>${rows}
+        <tr><td colspan="2"></td><td class="tr">Total</td><td></td><td>${p.subtotal.toFixed(2)}</td></tr>
+        ${(+p.gstRate)?`<tr><td colspan="2"></td><td class="tr">GST (${p.gstRate}%)</td><td></td><td>${p.gst.toFixed(2)}</td></tr>`:''}
+        <tr><td class="words" colspan="3">(In words: Rupees ${numToWords(p.total)} only)</td><td class="tr">Total</td><td>${p.total.toFixed(2)}</td></tr>
+      </tbody></table>
+    ${foot}
+    <div class="potermspage">${head}
+      <div class="qterms-h" style="text-decoration:underline">Terms &amp; Conditions</div>
+      <ol class="qterms">${terms}</ol>
+      <div class="qsign">${s.signatureImg?`<img src="${s.signatureImg}">`:''}Director</div>
+      ${foot}</div>
+  </div>`;
+  doPrint();
+}
+
+/* ---------------- print: report & invoice ---------------- */
+function docHead(){const s=DB.settings;return`<div class="doc-head">
+   <div><div class="ln">${esc(s.labName)}</div><div class="tag">${esc(s.tagline)}</div></div>
+   <div class="ci">${esc(s.address).replace(/,/g,',<br>')}<br>${esc(s.email)} · ${esc(s.web)}${s.gstin?'<br>GSTIN: '+esc(s.gstin):''}</div></div>`;}
+function docStyle(){const s=DB.settings;let st='--docalign:'+(s.docAlign||'justify')+';';if(s.docFont)st+='font-family:'+s.docFont+';';return ' style="'+st+'"';}
+function brandHead(){const s=DB.settings;
+   const logo=`<img class="qlogo" src="${s.logoImg||LOGO_DATA}">`;
+   return `<div class="qhead">${logo}<div class="nm">${esc(s.labName)}</div>
+     <div class="ad">${esc(s.address)}</div>
+     <div class="ad">${s.phone?'Mobile: '+esc((s.phone||'').replace(/^\+?91-?/,''))+' &nbsp; ':''}E. Mail: ${esc(s.email)}${s.web?' &nbsp; '+esc(s.web):''}${s.gstin?' &nbsp; GSTIN: '+esc(s.gstin):''}</div></div>`;}
+function repHead(){const s=DB.settings;
+   return brandHead()+`<div class="rtitle">${esc(s.reportHeaderTitle||'Test Report')}</div>`;}
+function printOutsourced(s){
+  const c=client(s.clientId)||{};const set=DB.settings;const sid=s.labCode||s.acc;const n=s.outPages.length;
+  const pages=s.outPages.map((p,i)=>`<div class="opage">${repHead()}
+    ${i===0?`<div class="obanner">Sample <b>${esc(sid)}</b>${c.name?' ('+esc(c.name)+')':''} was analysed at an external partner laboratory${s.extLab?' — '+esc(s.extLab):''}. The partner's report is reproduced below under ${esc(set.labName)}.</div>`:''}
+    <img class="pg" src="${p}">
+    <div class="rfoot"><span>${esc(set.labName)}</span><span>${esc(set.email)} &nbsp;·&nbsp; Page ${i+1} of ${n}</span></div></div>`).join('');
+  $('#printArea').innerHTML=`<div class="doc">${pages}</div>`;
+  doPrint();
+}
+function printReport(acc){
+  const s=DB.samples.find(x=>x.acc===acc);const c=client(s.clientId)||{};const t=test(s.testCode)||{};const set=DB.settings;
+  if(s.outsourced){if(s.hasExtReport){openExtReport(acc);}else{toast('Attach the external report file first');}return;}
+  const molecular=(t.cat==='DNA Barcoding'||t.cat==='Sequencing');
+  const mk=(s.marker&&s.marker!=='—')?s.marker:'';
+  const sid=s.labCode||s.acc, reg=s.regId||s.acc;
+  const bullets=txt=>String(txt||'').split('\n').filter(x=>x.trim()).map(x=>`<li>${esc(x.trim())}</li>`).join('');
+  const mkText=mk||'the target marker';
+  const sub=txt=>esc(String(txt||'').replace(/\{marker\}/gi,mkText));
+  const repTitle=esc(String(set.reportTitleTpl||'{MARKER} IDENTIFICATION REPORT')
+    .replace(/\{MARKER\}/gi,(mk||t.name||'TEST').toUpperCase())
+    .replace(/\{TEST\}/gi,(t.name||'').toUpperCase()));
+  const cust=`<table class="cust">
+    <tr><td>Sample type: <span class="v">${esc(s.specimen||s.sampleType||'—')}</span></td><td>Name of Customer: <span class="v">${esc(c.name||'—')}</span></td></tr>
+    <tr><td>Sample ID: <span class="v">${esc(sid)}</span></td><td>Customer Address: <span class="v">${esc(c.address||c.org||'—')}</span></td></tr>
+    <tr><td>Sample registration ID: <span class="v">${esc(reg)}</span></td><td>Reporting Date: <span class="v">${fdate(s.dateReported||today())}</span></td></tr>
+    <tr><td>Sample receiving Date: <span class="v">${fdate(s.dateReceived)}</span></td><td>Date of Analysis: <span class="v">${fdate(s.analysisDate||s.dateReported||today())}</span></td></tr></table>`;
+  const sig=`<div class="sigblock">Reviewed and Authorized by<br>
+    ${set.signatureImg?`<img src="${set.signatureImg}"><br>`:''}
+    <span class="sn">${esc(set.signatoryName||'')}</span><br>${esc(set.signatoryTitle||'')}</div>`;
+  let body;
+  if(molecular){
+    const sections=(set.reportSections||[]).map(sec=>{const cont=sub(sec.content);return `<div class="nsec">${esc(sec.heading)}</div><div class="nbody">${cont}</div>`;}).join('');
+    body=`<div class="repttl">${repTitle}</div>${sections}
+      <div class="nsec">Qualitative analysis of ${esc(mk||'')} amplicon:</div>
+      ${s.gelImage?`<div class="figwrap"><img src="${s.gelImage}"></div>`:''}
+      <div class="figcap">Figure: PCR product of ${esc(sid)}</div>
+      <div class="nsec">${esc(mk||'Sequencing')} sequencing result of ${esc(sid)}</div>
+      ${s.sequence?`<div class="fasta">&gt;${esc(sid)}<br>${esc(s.sequence).replace(/\s+/g,'')}</div>`:''}
+      <div class="bhd" style="text-align:center">Blast result</div>
+      <table class="blast"><thead><tr><th>Sample designation</th><th>Description (Closest Match)</th><th>Query Cover</th><th>Percent Identity</th><th>Accession</th></tr></thead>
+        <tbody><tr><td>${esc(sid)}</td><td><i>${esc(s.species||'—')}</i></td><td>${esc(s.queryCoverage||'—')}</td><td>${esc(s.identity||'—')}</td><td>${esc(s.genbank||'—')}</td></tr></tbody></table>`;
+  }else{
+    body=`<div class="repttl">${esc((t.name||'TEST').toUpperCase())} REPORT</div>
+      <div class="nsec">1. Specimen: <span style="font-weight:400">${esc(s.specimen||s.sampleType||'—')}</span></div>
+      <div class="nsec">2. Test performed:</div><div class="nbody">${esc(t.name||'—')}</div>
+      <div class="nsec">3. Result / Observation:</div><div class="nbody">${esc(s.conclusion||s.species||'—')}</div>`;
+  }
+  $('#printArea').innerHTML=`<div class="doc"${docStyle()}>${repHead()}${cust}${body}
+    <div class="bhd">Limitations:</div><ul class="blist">${bullets(set.limitations)}</ul>
+    <div class="bhd">Disclaimer:</div><ul class="blist">${bullets(set.disclaimer)}</ul>
+    ${sig}
+    <div class="endrep">– End of Report –</div>
+    <div class="rfoot"><span>${esc(set.labName)}</span><span>${esc(set.email)}</span></div>
+  </div>`;
+  doPrint();
+}
+function printInvoice(no){
+  const i=DB.invoices.find(x=>x.no===no);const c=client(i.clientId)||{};const s=DB.settings;
+  const lines=(i.accessions||[]).map(a=>{const smp=DB.samples.find(x=>x.acc===a)||{};const t=test(smp.testCode)||{};
+    const rate=samplePrice(smp),qty=smp.qty||1,discAmt=sampleDiscountAmt(smp),amt=sampleAmt(smp);
+    return`<tr><td>${esc(smp.regId||a)}</td><td>${esc(smp.labCode||'—')}</td><td>${esc(t.name||'')}</td><td>${esc(t.sac||'—')}</td>
+      <td>${qty}</td><td>${rs(rate)}</td><td>${discAmt?rs(discAmt):'—'}</td><td>${rs(amt)}</td></tr>`;}).join('');
+  const intra=(+i.cgst||0)>0;
+  $('#printArea').innerHTML=`<div class="doc qdoc"${docStyle()}>${brandHead()}
+    <div class="tinv-title">Tax Invoice</div>
+    <div class="tinv-meta">
+      <div class="row"><span><b>Invoice No:</b> ${esc(i.no)}</span><span><b>Date:</b> ${fdate(i.date)}</span></div>
+      <div class="row"><span><b>Bill To:</b> ${esc(c.name||'—')}${c.org?', '+esc(c.org):''}</span><span><b>Place of Supply:</b> ${esc(c.state||'—')}</span></div>
+      <div class="row"><span><b>Address:</b> ${esc(c.address||'—')}</span><span><b>Client GSTIN:</b> ${esc(c.gstin||'—')}</span></div>
+    </div>
+    <table class="tinv-table"><thead><tr><th>Registration ID</th><th>Sample ID</th><th>Test</th><th>SAC</th><th>Qty</th><th>Rate</th><th>Disc.</th><th>Amount</th></tr></thead>
+      <tbody>${lines}</tbody></table>
+    <div class="totbox">
+      <div class="r"><span>Taxable Value</span><span>${rs(i.taxable)}</span></div>
+      ${intra?`<div class="r"><span>CGST 9%</span><span>${rs(i.cgst)}</span></div>
+        <div class="r"><span>SGST 9%</span><span>${rs(i.sgst)}</span></div>`
+        :((+i.igst||0)>0?`<div class="r"><span>IGST 18%</span><span>${rs(i.igst)}</span></div>`:'')}
+      <div class="r grand"><span>Total</span><span>${rs(i.total)}</span></div></div>
+    <div class="tinv-words"><b>Amount Chargeable (in words):</b> INR ${numToWords(i.total)} Rupees Only</div>
+    <div class="tinv-acct"><b>Account Details</b>
+      Please make the balance payment using the bank details provided below:<br>
+      Account Holder Name: ${esc(s.bankAccName||'')}<br>
+      Account No.: ${esc(s.bankAccNo||'')}<br>
+      IFSC Code: ${esc(s.bankIFSC||'')}<br>
+      Name of the Bank: ${esc(s.bankName||'')}<br>
+      Branch: ${esc(s.bankBranch||'')}</div>
+    <div class="tinv-terms"><h4>Terms &amp; Conditions</h4><ol>${(s.invTerms||'').split('\n').filter(x=>x.trim()).map((x,idx)=>`<li>${esc(x)}</li>`).join('')}</ol></div>
+    <div class="tinv-decl"><b>Declaration:</b> ${esc(s.invDeclaration||'')}</div>
+    <div class="tinv-sig">Authorised Signatory</div>
+    <div class="tinv-foot">${esc(s.labName)} · ${esc(s.email)} · ${esc(s.web)}<br><span class="i">This is a computer-generated invoice and does not require a physical signature.</span></div>
+  </div>`;
+  doPrint();
+}
+function doPrint(){window.print();}
+
+/* ---------------- settings ---------------- */
+function vSettings(){
+  const s=DB.settings;
+  $('#view').innerHTML=`<div class="panel"><div class="panel-head"><h3>Lab details</h3></div>
+   <div style="padding:18px"><div class="grid2">
+     <div class="field"><label>Lab name</label><input id="set_name" value="${esc(s.labName)}"></div>
+     <div class="field"><label>Tagline</label><input id="set_tag" value="${esc(s.tagline)}"></div>
+     <div class="field full"><label>Address</label><textarea id="set_addr">${esc(s.address)}</textarea></div>
+     <div class="field"><label>Email</label><input id="set_email" value="${esc(s.email)}"></div>
+     <div class="field"><label>Website</label><input id="set_web" value="${esc(s.web)}"></div>
+     <div class="field"><label>Phone</label><input id="set_phone" value="${esc(s.phone)}"></div>
+     <div class="field"><label>Your GSTIN</label><input id="set_gstin" value="${esc(s.gstin)}"></div>
+     <div class="field"><label>Home state (for GST split)</label><select id="set_state">${STATES.map(x=>`<option ${s.homeState===x?'selected':''}>${x}</option>`).join('')}</select></div>
+     <div class="field"><label>Charge GST on invoices</label><select id="set_gst"><option value="yes" ${s.gstEnabled?'selected':''}>Yes</option><option value="no" ${!s.gstEnabled?'selected':''}>No (not GST-registered yet)</option></select></div>
+   </div>
+   <div style="border-top:1px solid var(--line);margin:14px 0"></div>
+   <div class="hint" style="font-weight:600;color:var(--purple);margin-bottom:10px">Report signatory &amp; standard text</div>
+   <div class="grid2">
+     <div class="field"><label>Signatory name</label><input id="set_signame" value="${esc(s.signatoryName)}"></div>
+     <div class="field"><label>Signatory title</label><input id="set_sigtitle" value="${esc(s.signatoryTitle)}"></div>
+     <div class="field full"><label>Signature image (optional)</label>
+       <div style="display:flex;align-items:center;gap:10px">
+         <input type="file" id="set_sigfile" accept="image/*" onchange="loadSig(event)">
+         <span id="sigstate" class="hint">${s.signatureImg?'Signature attached':'No signature'}</span>
+         ${s.signatureImg?'<button type="button" class="btn sm danger" onclick="clearSig()">Remove</button>':''}
+       </div>
+       ${s.signatureImg?`<img src="${s.signatureImg}" style="max-height:54px;margin-top:8px">`:''}
+     </div>
+     <div class="field full"><label>Limitations (one per line)</label><textarea id="set_lim" style="min-height:90px">${esc(s.limitations)}</textarea></div>
+     <div class="field full"><label>Disclaimer (one per line)</label><textarea id="set_dis" style="min-height:110px">${esc(s.disclaimer)}</textarea></div>
+   </div>
+   <div style="border-top:1px solid var(--line);margin:14px 0"></div>
+   <div class="hint" style="font-weight:600;color:var(--purple);margin-bottom:10px">Report header &amp; wording</div>
+   <div class="grid2">
+     <div class="field full"><label>Logo (shown on reports)</label>
+       <div style="display:flex;align-items:center;gap:10px">
+         <input type="file" id="set_logofile" accept="image/*" onchange="loadLogo(event)">
+         <span id="logostate" class="hint">${s.logoImg?'Logo attached':'Using default mark'}</span>
+         ${s.logoImg?'<button type="button" class="btn sm danger" onclick="clearLogo()">Remove</button>':''}
+       </div>
+       ${s.logoImg?`<img src="${s.logoImg}" style="max-height:54px;margin-top:8px">`:''}
+     </div>
+     <div class="field"><label>Header title</label><input id="set_rhtitle" value="${esc(s.reportHeaderTitle)}" placeholder="Test Report"></div>
+     <div class="field"><label>Report title template</label><input id="set_rttpl" value="${esc(s.reportTitleTpl)}"></div>
+     <div class="field full"><div class="hint">In the title, <b>{MARKER}</b> becomes the gene (COI, matK…) and <b>{TEST}</b> the test name. In the report sections, <b>{marker}</b> is replaced automatically.</div></div>
+     <div class="field"><label>Document font</label><select id="set_docfont">
+       ${[['','Default (per document)'],["'Times New Roman',Georgia,serif",'Times New Roman'],["Georgia,serif",'Georgia'],["Arial,Helvetica,sans-serif",'Arial'],["'Segoe UI',Calibri,sans-serif",'Calibri / Segoe'],["'Trebuchet MS',sans-serif",'Trebuchet MS'],["'Courier New',monospace",'Courier New']]
+         .map(([v,l])=>`<option value="${esc(v)}" ${(s.docFont||'')===v?'selected':''}>${l}</option>`).join('')}</select></div>
+     <div class="field"><label>Body text alignment</label><select id="set_docalign">
+       ${[['justify','Justified'],['left','Left'],['center','Centered'],['right','Right']].map(([v,l])=>`<option value="${v}" ${(s.docAlign||'justify')===v?'selected':''}>${l}</option>`).join('')}</select></div>
+     <div class="field full"><div class="hint">Font applies to the whole document; alignment applies to the body paragraphs (headings, tables and totals keep their layout). "Default" keeps reports in sans-serif and quotations / POs in Times.</div></div>
+   </div>
+   <div style="border-top:1px solid var(--line);margin:14px 0"></div>
+   <div class="hint" style="font-weight:600;color:var(--purple);margin-bottom:10px">Tax invoice — bank details, terms &amp; declaration</div>
+   <div class="grid2">
+     <div class="field"><label>Account holder name</label><input id="set_bankaccname" value="${esc(s.bankAccName)}"></div>
+     <div class="field"><label>Account number</label><input id="set_bankaccno" value="${esc(s.bankAccNo)}"></div>
+     <div class="field"><label>IFSC code</label><input id="set_bankifsc" value="${esc(s.bankIFSC)}"></div>
+     <div class="field"><label>Bank name</label><input id="set_bankname" value="${esc(s.bankName)}"></div>
+     <div class="field"><label>Branch</label><input id="set_bankbranch" value="${esc(s.bankBranch)}"></div>
+     <div class="field"></div>
+     <div class="field full"><label>Invoice Terms &amp; Conditions (one per line)</label><textarea id="set_invterms" style="min-height:100px">${esc(s.invTerms)}</textarea></div>
+     <div class="field full"><label>Invoice declaration</label><textarea id="set_invdecl">${esc(s.invDeclaration)}</textarea></div>
+   </div>
+   <div style="border-top:1px solid var(--line);margin:14px 0"></div>
+   <div class="hint" style="font-weight:600;color:var(--purple);margin-bottom:10px">Report sections (for DNA barcoding reports)</div>
+   <div id="reportsections"></div>
+   <button class="btn sm" onclick="addReportSection()" style="margin-bottom:14px">+ Add custom section</button>
+   <div style="border-top:1px solid var(--line);margin:14px 0"></div>
+   <div class="hint" style="font-weight:600;color:var(--purple);margin-bottom:10px">Client emails (opens in your mail app)</div>
+   ${(()=>{const et=s.email_tpls||{},rec=et.received||{},proc=et.processing||{},rdy=et.ready||{},del=et.delivered||{};return`
+   <div class="grid2">
+     <div class="field"><label>Auto-draft email on status change</label><select id="set_autoemail"><option value="no" ${!s.autoEmail?'selected':''}>No — use the ✉ button</option><option value="yes" ${s.autoEmail?'selected':''}>Yes — every status change</option></select></div>
+     <div class="field"></div>
+     <div class="field full"><div class="hint">Placeholders: <b>{client}</b>, <b>{accession}</b>, <b>{test}</b>, <b>{status}</b>, <b>{lab}</b></div></div>
+     <div class="field"><label>Received — subject</label><input id="set_em_rec_s" value="${esc(rec.subject)}"></div>
+     <div class="field"><label>Received — message</label><textarea id="set_em_rec_b">${esc(rec.body)}</textarea></div>
+     <div class="field"><label>In progress — subject</label><input id="set_em_proc_s" value="${esc(proc.subject)}"></div>
+     <div class="field"><label>In progress — message</label><textarea id="set_em_proc_b">${esc(proc.body)}</textarea></div>
+     <div class="field"><label>Report ready — subject</label><input id="set_em_ready_s" value="${esc(rdy.subject)}"></div>
+     <div class="field"><label>Report ready — message</label><textarea id="set_em_ready_b">${esc(rdy.body)}</textarea></div>
+     <div class="field"><label>Delivered — subject</label><input id="set_em_del_s" value="${esc(del.subject)}"></div>
+     <div class="field"><label>Delivered — message</label><textarea id="set_em_del_b">${esc(del.body)}</textarea></div>
+   </div>`;})()}
+   <div style="margin-top:6px"><button class="btn primary" onclick="saveSettings()">Save settings</button></div></div></div>`;
+}
+function saveSettings(){const g=i=>$('#'+i).value;
+  saveReportSections();
+  Object.assign(DB.settings,{labName:g('set_name'),tagline:g('set_tag'),address:g('set_addr'),email:g('set_email'),
+    web:g('set_web'),phone:g('set_phone'),gstin:g('set_gstin'),homeState:g('set_state'),gstEnabled:g('set_gst')==='yes',
+    signatoryName:g('set_signame'),signatoryTitle:g('set_sigtitle'),limitations:g('set_lim'),disclaimer:g('set_dis'),
+    reportHeaderTitle:g('set_rhtitle'),reportTitleTpl:g('set_rttpl'),docFont:g('set_docfont'),docAlign:g('set_docalign'),
+    bankAccName:g('set_bankaccname'),bankAccNo:g('set_bankaccno'),bankIFSC:g('set_bankifsc'),bankName:g('set_bankname'),bankBranch:g('set_bankbranch'),
+    invTerms:g('set_invterms'),invDeclaration:g('set_invdecl')});
+  DB.settings.autoEmail=$('#set_autoemail').value==='yes';
+  DB.settings.email_tpls={received:{subject:g('set_em_rec_s'),body:g('set_em_rec_b')},processing:{subject:g('set_em_proc_s'),body:g('set_em_proc_b')},ready:{subject:g('set_em_ready_s'),body:g('set_em_ready_b')},delivered:{subject:g('set_em_del_s'),body:g('set_em_del_b')}};
+  persist();toast('Settings saved');}
+function loadLogo(e){const f=e.target.files[0];if(!f)return;if(f.size>800000){toast('Use an image under ~0.8 MB');return;}
+  const r=new FileReader();r.onload=()=>{DB.settings.logoImg=r.result;persist();const st=$('#logostate');if(st)st.textContent='Logo attached';toast('Logo attached');};r.readAsDataURL(f);}
+function clearLogo(){DB.settings.logoImg='';persist();vSettings();toast('Logo removed');}
+function loadSig(e){const f=e.target.files[0];if(!f)return;if(f.size>800000){toast('Use an image under ~0.8 MB');return;}
+  const r=new FileReader();r.onload=()=>{DB.settings.signatureImg=r.result;persist();const st=$('#sigstate');if(st)st.textContent='Signature attached';toast('Signature attached');};r.readAsDataURL(f);}
+function clearSig(){DB.settings.signatureImg='';persist();vSettings();toast('Signature removed');}
+function addReportSection(){DB.settings.reportSections=DB.settings.reportSections||[];DB.settings.reportSections.push({id:'custom_'+Date.now(),heading:'Custom section',content:''});vSettings();}
+function removeReportSection(i){DB.settings.reportSections.splice(i,1);vSettings();toast('Section removed');}
+function saveReportSections(){const secs=[];for(let i=0;i<(DB.settings.reportSections||[]).length;i++){const h=$('#sec_head_'+i);const b=$('#sec_body_'+i);if(h&&b){secs.push({id:DB.settings.reportSections[i].id,heading:h.value,content:b.value});}}DB.settings.reportSections=secs;}
+
+/* ---------------- backup ---------------- */
+function vBackup(){
+  $('#view').innerHTML=`<div class="panel"><div class="panel-head"><h3>Backup &amp; restore</h3></div>
+   <div style="padding:18px;max-width:640px">
+     <p class="hint" style="margin-top:0">Your data lives only in this browser. Export a backup regularly and keep it safe — restoring the JSON on any computer rebuilds your whole LIMS.</p>
+
+     <div style="font-weight:600;color:var(--purple);margin:14px 0 8px">Excel workbook (everything in one file)</div>
+     <button class="btn primary" onclick="exportAllExcel()">⤓ Download Excel backup (.xls)</button>
+     <p class="hint" style="margin:8px 0 0">One workbook with separate sheets for Samples, Clients, Invoices, Quotations, Purchase Orders and Suppliers. Opens in Excel / Google Sheets.</p>
+
+     <div style="font-weight:600;color:var(--purple);margin:18px 0 8px">Individual CSV files</div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+       <button class="btn" onclick="exportCSVEntity('samples')">Samples</button>
+       <button class="btn" onclick="exportCSVEntity('clients')">Clients</button>
+       <button class="btn" onclick="exportCSVEntity('invoices')">Invoices</button>
+       <button class="btn" onclick="exportCSVEntity('quotations')">Quotations</button>
+       <button class="btn" onclick="exportCSVEntity('purchaseorders')">Purchase Orders</button>
+       <button class="btn" onclick="exportCSVEntity('suppliers')">Suppliers</button>
+     </div>
+
+     <div style="font-weight:600;color:var(--purple);margin:18px 0 8px">Accounting software export</div>
+     <button class="btn primary" onclick="exportOdooCSV()">⤓ Export invoices for Odoo Accounting (.csv)</button>
+     <p class="hint" style="margin:8px 0 0">One row per billed test line, with SAC code, GST rate and line total — ready for Odoo's Accounting → Customer Invoices → Import. LIMS stays the source of truth; import this after each billing cycle.</p>
+
+     <div style="font-weight:600;color:var(--purple);margin:18px 0 8px">Full backup &amp; restore</div>
+     <div style="display:flex;gap:9px;flex-wrap:wrap">
+       <button class="btn" onclick="exportJSON()">⤓ Download full backup (.json)</button>
+       <button class="btn" onclick="$('#imp').click()">Restore from .json backup</button>
+       <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+     </div>
+     <p class="hint" style="margin:8px 0 0">The .json file is the only format that restores everything (including settings, images and templates). CSV/Excel are for viewing and records.</p>
+
+     <div style="border-top:1px solid var(--line);margin:18px 0"></div>
+     <button class="btn danger" onclick="resetAll()">Reset all data</button>
+   </div></div>`;
+}
+function download(name,text,type){const b=new Blob([text],{type:type||'application/json'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function exportJSON(){download('clarigenomic_lims_'+today()+'.json',JSON.stringify(DB,null,2));toast('Backup downloaded');}
+function itemsSummary(items){return (items||[]).map(it=>(String(it.desc||'').split('\n')[0]+' x'+(it.qty||0)+' @'+(it.price||0))).join(' | ');}
+function entityData(which){
+  if(which==='samples')return{name:'Samples',
+    headers:['Accession','Date Received','Lab Code','Registration ID','Client','Sample Type','Specimen','Test','Marker','Qty','Assigned To','Status','Date Reported','Species','% Identity','Query Cover','E-value','GenBank','Seq Length','Conclusion','Outsourced','External Lab','Invoice No','Remarks'],
+    rows:DB.samples.map(s=>[s.acc,s.dateReceived,s.labCode||'',s.regId||'',(client(s.clientId)||{}).name||'',s.sampleType||'',s.specimen||'',(test(s.testCode)||{}).name||'',s.marker||'',+s.qty||0,s.assignedTo||'',s.status||'',s.dateReported||'',s.species||'',s.identity||'',s.queryCoverage||'',s.eValue||'',s.genbank||'',s.seqLength||'',s.conclusion||'',s.outsourced?'Yes':'No',s.extLab||'',s.invoiceNo||'',s.remarks||''])};
+  if(which==='clients')return{name:'Clients',
+    headers:['ID','Name','Organisation','Email','Phone','Address','State','GSTIN'],
+    rows:DB.clients.map(c=>[c.id,c.name||'',c.org||'',c.email||'',c.phone||'',c.address||'',c.state||'',c.gstin||''])};
+  if(which==='invoices')return{name:'Invoices',
+    headers:['Invoice No','Date','Client','Accessions','Taxable','CGST','SGST','IGST','Total','Payment'],
+    rows:DB.invoices.map(i=>[i.no,i.date,(client(i.clientId)||{}).name||'',(i.accessions||[]).join(', '),+i.taxable||0,+i.cgst||0,+i.sgst||0,+i.igst||0,+i.total||0,i.pay||''])};
+  if(which==='quotations')return{name:'Quotations',
+    headers:['Quote No','Ref','Date','Client','Subject','Items','Subtotal','Discount','Taxable','GST Rate %','GST','Total','Status'],
+    rows:(DB.quotations||[]).map(q=>[q.no,q.ref||'',q.date,(client(q.clientId)||{}).name||'',q.subject||'',itemsSummary(q.items),+q.subtotal||0,+q.discountTotal||0,+q.taxable||0,+q.gstRate||0,+q.gst||0,+q.total||0,q.status||''])};
+  if(which==='purchaseorders')return{name:'Purchase Orders',
+    headers:['PO No','Ref','Date','Category','Supplier','Supplier Address','Subject','Items','Subtotal','GST Rate %','GST','Total','Status'],
+    rows:(DB.purchaseorders||[]).map(p=>[p.no,p.ref||'',p.date,p.category||'',(p.supplier&&p.supplier.name)||'',(p.supplier&&p.supplier.address)||'',p.subject||'',itemsSummary(p.items),+p.subtotal||0,+p.gstRate||0,+p.gst||0,+p.total||0,p.status||''])};
+  if(which==='suppliers')return{name:'Suppliers',
+    headers:['ID','Name','GSTIN','Email','Phone','Address'],
+    rows:(DB.suppliers||[]).map(s=>[s.id,s.name||'',s.gstin||'',s.email||'',s.phone||'',s.address||''])};
+  return{name:which,headers:[],rows:[]};
+}
+function csvCell(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}
+function exportCSVEntity(which){const d=entityData(which);
+  const csv=[d.headers.map(csvCell).join(','),...d.rows.map(r=>r.map(csvCell).join(','))].join('\n');
+  download('ClariGenoMic_'+which+'_'+today()+'.csv',csv,'text/csv');toast(d.name+' exported');}
+function ddmmyyyy(iso){if(!iso)return'';const p=String(iso).slice(0,10).split('-');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:'';}
+function odooPayStatus(p){return p==='Paid'?'Paid':(p==='Partial'?'Partial':'Unpaid');}
+function odooRows(){
+  const rows=[];
+  DB.invoices.forEach(i=>{
+    const c=client(i.clientId)||{};
+    const intra=DB.settings.gstEnabled&&c.state===DB.settings.homeState;
+    const gstRate=DB.settings.gstEnabled?18:0;
+    (i.accessions||[]).forEach(a=>{
+      const s=DB.samples.find(x=>x.acc===a);if(!s)return;
+      const t=test(s.testCode)||{};
+      const qty=+s.qty||1;
+      const unitPrice=samplePrice(s);
+      const lineTotal=sampleAmt(s);
+      rows.push([
+        ddmmyyyy(i.date),i.no,c.name||'',c.gstin||'',c.state||'',c.address||'',
+        t.name||s.testCode||'',t.sac||'',qty,unitPrice.toFixed(2),gstRate,lineTotal.toFixed(2),
+        odooPayStatus(i.pay),'',''
+      ]);
+    });
+  });
+  return rows;
+}
+function exportOdooCSV(){
+  const headers=['Invoice Date','Invoice Number','Customer Name','Customer GSTIN','Customer State','Customer Address','Product/Service Description','SAC Code','Quantity','Unit Price','GST Rate','Line Total','Payment Status','Payment Date','Payment Mode'];
+  const rows=odooRows();
+  if(!rows.length){toast('No invoices to export yet');return;}
+  const csv=[headers.map(csvCell).join(','),...rows.map(r=>r.map(csvCell).join(','))].join('\n');
+  download('ClariGenoMic_Odoo_Accounting_'+today()+'.csv',csv,'text/csv');
+  toast(rows.length+' invoice lines exported for Odoo');
+}
+function xesc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function xlsCell(v){const num=typeof v==='number'&&isFinite(v);return `<Cell><Data ss:Type="${num?'Number':'String'}">${xesc(v)}</Data></Cell>`;}
+function xlsSheet(d){const safe=d.name.replace(/[:\\\/?*\[\]]/g,' ').slice(0,31);
+  const hr=`<Row>${d.headers.map(h=>`<Cell><Data ss:Type="String">${xesc(h)}</Data></Cell>`).join('')}</Row>`;
+  const rr=d.rows.map(r=>`<Row>${r.map(xlsCell).join('')}</Row>`).join('');
+  return `<Worksheet ss:Name="${xesc(safe)}"><Table>${hr}${rr}</Table></Worksheet>`;}
+function exportAllExcel(){
+  const which=['samples','clients','invoices','quotations','purchaseorders','suppliers'];
+  const sheets=which.map(w=>xlsSheet(entityData(w))).join('');
+  const xml=`<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n`+
+    `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${sheets}</Workbook>`;
+  download('ClariGenoMic_backup_'+today()+'.xls',xml,'application/vnd.ms-excel');toast('Excel workbook downloaded');}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.settings||!d.tests)throw 0;
+    confirmBox('Restore this backup? It replaces all current data.',()=>{DB=d;persist();toast('Backup restored');go('dashboard');},'Restore');
+  }catch(_){toast('That file is not a valid backup');}};
+  r.readAsText(f);}
+function resetAll(){confirmBox('Erase ALL data and start fresh? This cannot be undone.',()=>{DB=seed();persist();toast('Reset complete');go('dashboard');},'Erase everything');}
+
+/* keep invoice summary updating: patch render hook */
+const _render=render;
+render=function(){_render();if(current==='invoices'){}};
+const _open=openModal;openModal=function(h,w){_open(h,w);if($('#i_summary'))recalcInv();
+  if($('#f_amt'))updSampleAmt();
+  if($('#qitems')){renderQItems();}
+  if($('#pitems')){renderPItems();}};
+
+/* boot happens via window.onload -> Google Sign-In -> loadData_() above */
+    </script>
+</body>
+
+</html>
