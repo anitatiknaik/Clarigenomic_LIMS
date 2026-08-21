@@ -1446,7 +1446,7 @@
         /* PASTE YOUR DEPLOYED APPS SCRIPT WEB APP URL BELOW (ends in /exec) */
         const API_URL = 'https://script.google.com/macros/s/AKfycbwOtPUgC1bgauW-VKIKH1MQYVooGWq6j0di2DmICXsNGEX7jWEj5JHdnYvAIKzGasri5Q/exec';
         /* Must exactly match OAUTH_CLIENT_ID in your Code.gs, and the Client ID from Google Cloud Console */
-        const OAUTH_CLIENT_ID = '110901751128-ohbaluvf0jotkmsurj0g2gm60h62667k.apps.googleusercontent.com';
+        const OAUTH_CLIENT_ID = 'PASTE_YOUR_OAUTH_CLIENT_ID_HERE.apps.googleusercontent.com';
 
         let ID_TOKEN = null,
             SIGNED_IN_EMAIL = null;
@@ -1467,8 +1467,14 @@
                 return;
             }
             SAVE_INFLIGHT = true;
+            /* mode:'no-cors' is required because Apps Script Web Apps don't send
+               CORS headers cross-origin. The request still reaches doPost() and is
+               processed normally — we just can't read the response body back (it's
+               "opaque"), so we treat a resolved fetch (no network-level throw) as a
+               successful save. */
             fetch(API_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'text/plain;charset=utf-8'
                     },
@@ -1477,9 +1483,7 @@
                         db: DB
                     })
                 })
-                .then(r => r.json())
-                .then(r => {
-                    if (!r || !r.ok) throw new Error((r && r.error) || 'save failed');
+                .then(() => {
                     SAVE_INFLIGHT = false;
                     NOSTORE = false;
                     const b = document.getElementById('storeBanner');
@@ -1704,14 +1708,36 @@
                     '<br><span style="font-size:12px;color:#6B6480;display:block;margin-top:8px;max-width:340px">' +
                     'Open the browser console (F12 → Console) and check for a red error message.</span>';
             }, 10000);
-            fetch(API_URL + '?token=' + encodeURIComponent(ID_TOKEN))
-                .then(r => r.json())
-                .then(r => {
+            /* JSONP (a <script> tag), not fetch(), because Apps Script Web Apps don't
+               reliably send CORS headers cross-origin — a script tag load is never
+               subject to CORS, so this avoids the block entirely. */
+            const cbName = '__limsBoot' + Date.now();
+            const script = document.createElement('script');
+            let settled = false;
+            const cleanup = function() {
+                delete window[cbName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+            };
+            window[cbName] = function(r) {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                try {
                     if (r && r.error) throw new Error(r.error);
                     SIGNED_IN_EMAIL = r && r.email;
                     bootApp_(r && r.db ? r.db : null);
-                })
-                .catch(bootFailed_);
+                } catch (err) {
+                    bootFailed_(err);
+                }
+            };
+            script.onerror = function() {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                bootFailed_(new Error('Could not reach the data API. Check API_URL is correct.'));
+            };
+            script.src = API_URL + '?token=' + encodeURIComponent(ID_TOKEN) + '&callback=' + cbName;
+            document.head.appendChild(script);
         }
 
         function handleSignIn_(response) {
