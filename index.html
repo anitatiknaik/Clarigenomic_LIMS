@@ -489,7 +489,13 @@ window.onload=function(){
   google.accounts.id.initialize({client_id:OAUTH_CLIENT_ID,callback:handleSignIn_});
   document.getElementById('signInScreen').style.display='flex';
   google.accounts.id.renderButton(document.getElementById('g_id_signin_container'),{theme:'outline',size:'large',text:'signin_with'});
-  google.accounts.id.prompt();
+  /* Deliberately NOT calling google.accounts.id.prompt() here. That auto
+     "One Tap" flow and the rendered button below both try to obtain a
+     credential via Google's FedCM system — running them together can
+     cause one to cancel the other ("FedCM get() rejects with AbortError"),
+     producing exactly the kind of intermittent, timing-dependent sign-in
+     failures seen across different browsers/devices. The button alone is
+     enough. */
 };
 
 /* ---------------- helpers ---------------- */
