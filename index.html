@@ -426,10 +426,15 @@ function normalizeDB_(){
 }
 function bootApp_(loadedDb){
   BOOT_DONE=true;
-  const isNew=!loadedDb;
   DB=loadedDb||seed();
   normalizeDB_();
-  if(isNew)persist();
+  /* Deliberately NOT auto-persisting here, even for a brand-new/empty
+     database. Writing back immediately on every load meant that ANY
+     transient load hiccup (a network blip, a slow response, anything that
+     made the server report "no data") would silently overwrite real,
+     already-saved data with a blank database. Now nothing gets written
+     until you actually do something — register a sample, add a client,
+     etc. — which only happens once real data legitimately exists. */
   document.getElementById('bootScreen').style.display='none';
   document.getElementById('appRoot').style.display='';
   go('dashboard');
