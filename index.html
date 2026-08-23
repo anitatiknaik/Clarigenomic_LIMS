@@ -631,9 +631,9 @@ function vSamples(){
          <td><select class="statussel" onchange="setStatus('${x.acc}',this.value)">${STATUSES.map(s=>`<option ${x.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
          <td>${fdate(x.dateReceived)}</td>
          <td style="white-space:nowrap;text-align:right">
-           <button class="btn sm" onclick="sampleDetail('${x.acc}')">Open</button>
-           <button class="btn sm" onclick="emailClient('${x.acc}')" title="Email client">✉</button>
-           <button class="btn sm" onclick="printReport('${x.acc}')">${x.outsourced?'Ext. report':'Report'}</button>
+           <button class="btn sm" onclick="sampleForm('${x.acc}','report')">Edit report</button>
+           <button class="btn sm" onclick="setStatus('${x.acc}','Report Ready')" title="Marks status as Report Ready">Approve report</button>
+           <button class="btn sm" onclick="printReport('${x.acc}')">Print report</button>
          </td></tr>`).join('')}</tbody></table>`
      :emptyState('No matching samples','Adjust filters or register a new sample.',"sampleForm()","Register sample")}
    </div>`;
@@ -656,12 +656,33 @@ function setStatus(acc,st){const s=DB.samples.find(x=>x.acc===acc);s.status=st;s
   if((st==='Report Ready'||st==='Delivered')&&!s.dateReported)s.dateReported=today();persist();toast('Status → '+st);
   if(DB.settings.autoEmail){const c=client(s.clientId)||{};if(c.email)emailClient(acc);}}
 
-function sampleForm(acc){
+function switchSampleTab(name){
+  const sampleDiv=document.getElementById('tabpanel_sample');
+  const reportDiv=document.getElementById('tabpanel_report');
+  const btnSample=document.getElementById('tabbtn_sample');
+  const btnReport=document.getElementById('tabbtn_report');
+  if(!sampleDiv||!reportDiv)return;
+  if(name==='report'){
+    sampleDiv.style.display='none';reportDiv.style.display='';
+    btnReport.style.borderBottomColor='var(--purple)';btnReport.style.color='var(--purple)';
+    btnSample.style.borderBottomColor='transparent';btnSample.style.color='var(--muted)';
+  }else{
+    sampleDiv.style.display='';reportDiv.style.display='none';
+    btnSample.style.borderBottomColor='var(--purple)';btnSample.style.color='var(--purple)';
+    btnReport.style.borderBottomColor='transparent';btnReport.style.color='var(--muted)';
+  }
+}
+function sampleForm(acc,openTab){
   const s=acc?DB.samples.find(x=>x.acc===acc):null;
   if(!DB.clients.length){toast('Add a client first');return clientForm();}
   openModal(`
    <div class="modal-head"><h3>${s?'Edit sample':'Register sample'}</h3><button class="x" onclick="closeModal()">×</button></div>
    <div class="modal-body">
+     ${s?`<div style="display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px">
+       <button type="button" id="tabbtn_sample" onclick="switchSampleTab('sample')" style="padding:8px 16px;border:0;border-bottom:2px solid var(--purple);background:transparent;font-weight:600;color:var(--purple);cursor:pointer">Sample &amp; Client</button>
+       <button type="button" id="tabbtn_report" onclick="switchSampleTab('report')" style="padding:8px 16px;border:0;border-bottom:2px solid transparent;background:transparent;font-weight:600;color:var(--muted);cursor:pointer">Report</button>
+     </div>`:''}
+     <div id="tabpanel_sample">
      <div class="grid2">
        <div class="field"><label>Client</label><select id="f_client">${DB.clients.map(c=>`<option value="${c.id}" ${s&&s.clientId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
        <div class="field"><label>Sample type</label><input id="f_type" value="${s?esc(s.sampleType):''}" placeholder="e.g. Leaf tissue, Bacterial isolate"></div>
@@ -677,8 +698,8 @@ function sampleForm(acc){
        <div class="field full"><div class="hint">Unit price is taken from the test catalogue and pre-filled — adjust it or add a discount here, and the invoice will use this amount. <b>Line amount: <span id="f_amt">₹0.00</span></b></div></div>
      </div>
      <div class="field full"><label>Remarks</label><textarea id="f_remarks">${s?esc(s.remarks):''}</textarea></div>
-     ${s?`<div style="border-top:1px solid var(--line);margin:6px 0 14px"></div>
-     <div class="hint" style="margin-bottom:8px;font-weight:600;color:var(--purple)">Results (fill when ready)</div>
+     </div>
+     ${s?`<div id="tabpanel_report" style="display:none">
      <div class="grid3">
        <div class="field"><label>Species identified</label><input id="f_species" value="${esc(s.species)}"></div>
        <div class="field"><label>% Identity</label><input id="f_identity" value="${esc(s.identity)}" placeholder="e.g. 99.6%"></div>
@@ -713,7 +734,8 @@ function sampleForm(acc){
        </div>
      </div>
      ${(s.comms&&s.comms.length)?`<div class="field full"><label>Client communication log</label>
-       <div class="hint">${s.comms.slice().reverse().map(x=>`${esc(x.stage)} — ${fdate(x.date)}`).join('<br>')}</div></div>`:''}`:''}
+       <div class="hint">${s.comms.slice().reverse().map(x=>`${esc(x.stage)} — ${fdate(x.date)}`).join('<br>')}</div></div>`:''}
+     </div>`:''}
    </div>
    <div class="modal-foot">
      ${s?`<button class="btn danger" onclick="delSample('${s.acc}')">Delete</button>
@@ -721,6 +743,7 @@ function sampleForm(acc){
      <button class="btn" onclick="closeModal()">Cancel</button>
      <button class="btn primary" onclick="saveSample('${acc||''}')">${s?'Save changes':'Register'}</button>
    </div>`,true);
+   if(openTab==='report')switchSampleTab('report');
 }
 function onTestPick(){const t=test($('#f_test').value)||{};const pf=$('#f_price');if(pf){pf.value=t.price||0;}updSampleAmt();}
 function updSampleAmt(){const el=$('#f_amt');if(!el)return;const price=+(($('#f_price')||{}).value)||0;const qty=+(($('#f_qty')||{}).value)||1;const discType=(($('#f_disctype')||{}).value)||'percent';const disc=+(($('#f_disc')||{}).value)||0;
