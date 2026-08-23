@@ -222,6 +222,11 @@
   .tinv-sig{text-align:left;font-size:11px;border-top:1px solid #555;width:200px;margin-top:40px;padding-top:4px}
   .tinv-foot{margin-top:14px;border-top:1px solid #ddd;padding-top:8px;font-size:10px;color:#666;text-align:center;line-height:1.6}
   .tinv-foot .i{font-style:italic}
+  .hscroll{overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--silver) var(--lav-2)}
+  .hscroll::-webkit-scrollbar{height:10px}
+  .hscroll::-webkit-scrollbar-track{background:var(--lav-2);border-radius:6px}
+  .hscroll::-webkit-scrollbar-thumb{background:var(--silver);border-radius:6px}
+  .hscroll::-webkit-scrollbar-thumb:hover{background:var(--purple-l)}
 
   @media (max-width:760px){
     .app{grid-template-columns:1fr}
@@ -621,7 +626,7 @@ function vSamples(){
          ${sampleFilter.status?`<button class="btn sm" onclick="bulkEmailByStatus('${sampleFilter.status}')" title="Send update to all clients at this stage">✉ Bulk email (${sampleFilter.status})</button>`:''}
        </div>
      </div>
-          ${rows.length?`<div style="overflow-x:auto"><table><thead><tr><th>Accession</th><th>Sample ID</th><th>Client</th><th>Test</th><th>Marker</th><th>Status</th><th>Received</th><th></th></tr></thead><tbody>
+         ${rows.length?`<div class="hscroll"><table><thead><tr><th>Accession</th><th>Sample ID</th><th>Client</th><th>Test</th><th>Marker</th><th>Status</th><th>Received</th><th></th></tr></thead><tbody>
        ${rows.map(x=>`<tr>
          <td><span class="acc">${esc(x.acc)}</span>${x.outsourced?'<br><span class="pill s-Delivered" style="font-size:10px">Outsourced</span>':''}</td>
          <td><b>${esc(x.labCode||'—')}</b></td>
@@ -654,7 +659,8 @@ function vSamples(){
 }
 function setStatus(acc,st){const s=DB.samples.find(x=>x.acc===acc);s.status=st;s.statusUpdated=today();
   if((st==='Report Ready'||st==='Delivered')&&!s.dateReported)s.dateReported=today();persist();toast('Status → '+st);
-  if(DB.settings.autoEmail){const c=client(s.clientId)||{};if(c.email)emailClient(acc);}}
+  if(DB.settings.autoEmail){const c=client(s.clientId)||{};if(c.email)emailClient(acc);}
+  render();}
 
 function switchSampleTab(name){
   const sampleDiv=document.getElementById('tabpanel_sample');
