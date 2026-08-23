@@ -195,7 +195,7 @@
   .qfoot{border-top:2px solid #0F9D6E;margin-top:20px;padding-top:5px;text-align:center;font-style:italic;font-size:9px;color:#444}
   .qedit th{font-weight:600;color:var(--muted);padding:4px;border-bottom:1px solid var(--line)}
   .qedit td{padding:4px;vertical-align:top}
-  .potermspage{page-break-before:always;padding-top:6px}
+  .potermspage{padding-top:6px}
   .doc table.rep{width:100%;border-collapse:collapse;margin:8px 0 14px}
   .doc table.rep th{background:var(--purple);color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left}
   .doc table.rep td{border:1px solid #ddd;padding:8px 10px;font-size:12.5px}
@@ -397,7 +397,7 @@ function seed(){
       quoteSubject:'Quotation for Sanger Sequencing',
       quoteNote:'The cost of primer synthesis is not included in the quoted price and will be charged additionally at actuals.',
       quoteTerms:'50% advance payment required before sample processing begins.\nRemaining 50% to be paid upon delivery of results.\nSamples must be submitted with proper labeling and documentation.\nResults will be delivered via email in PDF / FASTQ format as applicable.\nClariGenoMic is not responsible for results arising from poor quality samples.\nThis quotation is valid for 60 days from the date of issue.',
-      poTerms:'Delivery period: As per Purchase Order / agreed timeline.\nPlace of delivery: The material/equipment shall be delivered at ClariGenoMic Research and Solutions, office No. 307, Chanyaknagari, Sinhgad Road, Hingane Khurd, Pune – 411051.\nPrice: Inclusive of all taxes, installation and delivery/supply on the above mentioned address.\nDiscount if any: Included in the cost.\nOther extra taxes: Inclusive of all taxes for ClariGenoMic Research and Solutions.\nWarranty / Guarantee: As per agreement/product specification.\nTerms of payment: 100% Payment after delivery, inspection of material, installation and expected functioning for its use.\nPenalty clause: On failure to supply/deliver the ordered materials/equipment within the stipulated time, the concerned vendor shall be liable for penalty. ClariGenoMic Research and Solutions reserves the right to cancel the order in such cases.\nOther: Nil.\nSpecial Instruction if any: Invoice — Supplier shall raise the invoice ONLY after successful installation, demonstration, and written acceptance by ClariGenoMic Research and Solutions.',
+      poTerms:'Delivery period: As per Purchase Order / agreed timeline.\nPlace of delivery: The material/equipment shall be delivered at ClariGenoMic Research and Solutions, office No. 307, Chanyaknagari, Sinhgad Road, Hingane Khurd, Pune – 411051.\nPrice: Inclusive of all taxes, installation and delivery/supply on the above mentioned address.\nDiscount if any: Included in the cost.\nOther extra taxes: Inclusive of all taxes for ClariGenoMic Research and Solutions.\nWarranty / Guarantee: As per agreement/product specification.\nTerms of payment: as per aggreed terms of payment.\nPenalty clause: On failure to supply/deliver the ordered materials/equipment within the stipulated time, the concerned vendor shall be liable for penalty. ClariGenoMic Research and Solutions reserves the right to cancel the order in such cases.\nOther: Nil.\nSpecial Instruction if any: Invoice — Supplier shall raise the invoice ONLY after successful installation, demonstration, and written acceptance by ClariGenoMic Research and Solutions.',
       bankAccName:'Clarigenomic Research and Solutions',bankAccNo:'60583395199',bankIFSC:'MAHB0001385',bankName:'Bank of Maharashtra',bankBranch:'Bavdhan, Pune',
       invTerms:'Payment Terms: Any outstanding amount should be paid within 15 days from the date of invoice.\nThis invoice is issued for services completed and/or reports dispatched as applicable.\nThe client shall make payment using the bank details provided in this invoice.\nAny discrepancy in the invoice should be communicated to ClariGenoMic within 7 days of receipt.\nAll services are subject to the scope agreed in the quotation and the information/sample provided by the client.',
       invDeclaration:'We declare that this invoice reflects the actual charges for the services described and that the particulars stated herein are true and correct.',
@@ -907,9 +907,9 @@ function vSuppliers(){
   const rows=[...(DB.suppliers||[])].reverse();
   $('#view').innerHTML=`<div class="panel">
     <div class="panel-head"><h3>Suppliers</h3><div class="tools"><span class="hint">${(DB.suppliers||[]).length} total</span></div></div>
-    ${rows.length?`<table><thead><tr><th>ID</th><th>Supplier</th><th>GSTIN</th><th>Contact</th><th></th></tr></thead><tbody>
+    ${rows.length?`<table><thead><tr><th>ID</th><th>Supplier</th><th>State</th><th>GSTIN</th><th>Contact</th><th></th></tr></thead><tbody>
      ${rows.map(s=>`<tr><td><span class="acc">${esc(s.id)}</span></td><td>${esc(s.name)}</td>
-       <td>${esc(s.gstin)||'—'}</td><td>${esc(s.email||s.phone)||'—'}</td>
+       <td>${esc(s.state)||'—'}</td><td>${esc(s.gstin)||'—'}</td><td>${esc(s.email||s.phone)||'—'}</td>
        <td style="text-align:right"><button class="btn sm" onclick="supplierForm('${s.id}')">Edit</button></td></tr>`).join('')}</tbody></table>`
     :emptyState('No suppliers yet','Add a vendor so you can pick them on purchase orders.',"supplierForm()","Add supplier")}
    </div>`;
@@ -919,6 +919,7 @@ function supplierForm(id){
   openModal(`<div class="modal-head"><h3>${s?'Edit supplier':'Add supplier'}</h3><button class="x" onclick="closeModal()">×</button></div>
    <div class="modal-body"><div class="grid2">
      <div class="field"><label>Supplier / vendor name</label><input id="su_name" value="${s?esc(s.name):''}" placeholder="e.g. Rainbow Scientific"></div>
+     <div class="field"><label>State</label><select id="su_state">${STATES.map(x=>`<option ${s&&s.state===x?'selected':(!s&&x==='Maharashtra'?'selected':'')}>${x}</option>`).join('')}</select></div>
      <div class="field"><label>GSTIN</label><input id="su_gstin" value="${s?esc(s.gstin):''}"></div>
      <div class="field"><label>Email</label><input id="su_email" value="${s?esc(s.email):''}"></div>
      <div class="field"><label>Phone</label><input id="su_phone" value="${s?esc(s.phone):''}"></div>
@@ -931,13 +932,13 @@ function supplierForm(id){
 function saveSupplier(id){
   const g=i=>$('#'+i).value.trim();
   if(!g('su_name')){toast('Enter a supplier name');return;}
-  if(id){Object.assign(supplier(id),{name:g('su_name'),gstin:g('su_gstin'),email:g('su_email'),phone:g('su_phone'),address:g('su_addr')});}
-  else{DB.suppliers.push({id:supId(),name:g('su_name'),gstin:g('su_gstin'),email:g('su_email'),phone:g('su_phone'),address:g('su_addr'),dateAdded:today()});}
+  if(id){Object.assign(supplier(id),{name:g('su_name'),state:g('su_state'),gstin:g('su_gstin'),email:g('su_email'),phone:g('su_phone'),address:g('su_addr')});}
+  else{DB.suppliers.push({id:supId(),name:g('su_name'),state:g('su_state'),gstin:g('su_gstin'),email:g('su_email'),phone:g('su_phone'),address:g('su_addr'),dateAdded:today()});}
   persist();closeModal();toast(id?'Supplier updated':'Supplier added');render();
 }
 function delSupplier(id){confirmBox('Delete this supplier?',()=>{DB.suppliers=DB.suppliers.filter(s=>s.id!==id);persist();closeModal();toast('Supplier deleted');render();});}
-function upsertSupplier(name,address){if(!name)return;const ex=(DB.suppliers||[]).find(s=>s.name.toLowerCase()===name.toLowerCase());
-  if(ex){ex.address=address||ex.address;}else{DB.suppliers.push({id:supId(),name,address:address||'',gstin:'',email:'',phone:'',dateAdded:today()});}}
+function upsertSupplier(name,address,state){if(!name)return;const ex=(DB.suppliers||[]).find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(ex){ex.address=address||ex.address;if(state)ex.state=state;}else{DB.suppliers.push({id:supId(),name,address:address||'',state:state||'Maharashtra',gstin:'',email:'',phone:'',dateAdded:today()});}}
 
 /* ---------------- catalogue ---------------- */
 function vCatalogue(){ 
@@ -1349,7 +1350,7 @@ function vPurchaseOrders(){
        <td>${esc(p.category||'Equipment')}</td>
        <td class="num"><b>${rs(p.total)}</b></td>
        <td><select class="statussel" onchange="setPOStatus('${p.no}',this.value)">${['Issued','Delivered','Installed','Completed','Cancelled'].map(st=>`<option ${p.status===st?'selected':''}>${st}</option>`).join('')}</select></td>
-       <td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="poForm('${p.no}')">Edit</button> <button class="btn sm" onclick="printPO('${p.no}')">Print</button> <button class="btn sm danger" onclick="delPO('${p.no}')">Delete</button></td></tr>`).join('')}</tbody></table>`
+              <td style="text-align:right;white-space:nowrap"><button class="btn sm" onclick="poForm('${p.no}')">Edit</button> <button class="btn sm" onclick="editPORef('${p.no}')">Edit no.</button> <button class="btn sm" onclick="printPO('${p.no}')">Print</button> <button class="btn sm danger" onclick="delPO('${p.no}')">Delete</button></td></tr>`).join('')}</tbody></table>`
     :emptyState('No purchase orders yet','Create a supply order to a vendor for instruments, consumables or chemicals.',"poForm()","Create PO")}
       </div>`;
 
@@ -1387,7 +1388,13 @@ function poFormHtml(p){
          <option value="">— Select a saved supplier (or type a new one below) —</option>
          ${(DB.suppliers||[]).map(su=>`<option value="${su.id}">${esc(su.name)}</option>`).join('')}</select></div>
        <div class="field"><label>Supplier / vendor name</label><input id="p_supname" value="${esc(sup.name||'')}" placeholder="e.g. Rainbow Scientific"></div>
+       <div class="field"><label>Supplier state</label><select id="p_supstate" onchange="recalcPO()">${STATES.map(x=>`<option ${sup.state===x?'selected':(!sup.state&&x==='Maharashtra'?'selected':'')}>${x}</option>`).join('')}</select></div>
        <div class="field"><label>GST rate</label><select id="p_gst" onchange="recalcPO()">${[['0','No GST'],['5','5%'],['12','12%'],['18','18%']].map(([v,l])=>`<option value="${v}" ${String(p?(p.gstRate||0):(DB.settings.gstEnabled?18:0))===v?'selected':''}>${l}</option>`).join('')}</select></div>
+       <div class="field"><label>GST type</label><select id="p_gsttype" onchange="recalcPO()">
+         <option value="auto" ${(!p||!p.gstType||p.gstType==='auto')?'selected':''}>Auto (based on supplier's state)</option>
+         <option value="intra" ${(p&&p.gstType==='intra')?'selected':''}>CGST + SGST (in-state)</option>
+         <option value="inter" ${(p&&p.gstType==='inter')?'selected':''}>IGST (out-of-state)</option>
+       </select></div>
        <div class="field full"><label>Supplier address</label><textarea id="p_supaddr" placeholder="Full address of the supplier">${esc(sup.address||'')}</textarea></div>
      </div>
      <div class="field full"><label>Items — instruments, consumables or chemicals (free text)</label></div>
@@ -1404,7 +1411,7 @@ function poFormHtml(p){
 function poCatChange(){const cat=$('#p_cat').value.trim();const c=PO_CAT[cat]||{seg:(cat?cat.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()||'GEN':'GEN'),subj:'Supply Order for '+(cat?cat.toLowerCase():'laboratory items')};
   const fy=fyOf($('#p_date').value||today());const seq=(DB.purchaseorders||[]).filter(x=>(x.ref||'').indexOf('/'+fy+'/')>-1).length+1;
   $('#p_ref').value='CGM/'+c.seg+'/'+fy+'/'+String(seq).padStart(3,'0');$('#p_subject').value=c.subj;}
-function poPickSupplier(){const su=supplier($('#p_suppick').value);if(!su)return;$('#p_supname').value=su.name||'';$('#p_supaddr').value=su.address||'';}
+function poPickSupplier(){const su=supplier($('#p_suppick').value);if(!su)return;$('#p_supname').value=su.name||'';$('#p_supaddr').value=su.address||'';if($('#p_supstate'))$('#p_supstate').value=su.state||'Maharashtra';recalcPO();}
 function renderPItems(){
   const tb=$('#pitems');if(!tb)return;
   tb.innerHTML=PITEMS.map((it,i)=>`<tr style="border-bottom:1px solid var(--line)">
@@ -1418,33 +1425,55 @@ function renderPItems(){
 }
 function addPItem(){PITEMS.push({desc:'',price:0,qty:1});renderPItems();}
 function poTotals(){let subtotal=0;PITEMS.forEach(it=>subtotal+=(+it.price||0)*(+it.qty||0));
-  const rate=+(($('#p_gst')||{}).value)||0;const gst=subtotal*rate/100;return{subtotal,rate,gst,total:subtotal+gst};}
+  const rate=+(($('#p_gst')||{}).value)||0;
+  const override=(($('#p_gsttype')||{}).value)||'auto';
+  const supState=(($('#p_supstate')||{}).value)||'Maharashtra';
+  let gstType;
+  if(override==='intra')gstType='intra';
+  else if(override==='inter')gstType='inter';
+  else gstType=(supState===DB.settings.homeState)?'intra':'inter';
+  let cgst=0,sgst=0,igst=0;
+  if(gstType==='inter'){igst=subtotal*rate/100;}else{cgst=subtotal*rate/200;sgst=subtotal*rate/200;}
+  const gst=cgst+sgst+igst;
+  return{subtotal,rate,gstType,cgst,sgst,igst,gst,total:subtotal+gst};}
 function recalcPO(){
   if(!$('#p_summary'))return;
   document.querySelectorAll('#pitems tr').forEach((tr,i)=>{const cell=tr.querySelector('.pla');if(cell&&PITEMS[i])cell.textContent=rs((+PITEMS[i].price||0)*(+PITEMS[i].qty||0));});
   const t=poTotals();
   $('#p_summary').innerHTML=`<div class="totbox">
     <div class="r"><span>Total</span><b>${rs(t.subtotal)}</b></div>
-    ${t.rate?`<div class="r"><span>GST (${t.rate}%)</span><span>${rs(t.gst)}</span></div>`:''}
+    ${t.rate?(t.gstType==='inter'?`<div class="r"><span>IGST (${t.rate}%)</span><span>${rs(t.igst)}</span></div>`
+      :`<div class="r"><span>CGST (${(t.rate/2)}%)</span><span>${rs(t.cgst)}</span></div>
+        <div class="r"><span>SGST (${(t.rate/2)}%)</span><span>${rs(t.sgst)}</span></div>`):''}
     <div class="r grand"><span>Grand total</span><span>${rs(t.total)}</span></div>
     <div class="r" style="font-size:11px;color:var(--muted)"><span>In words</span><span>Rupees ${numToWords(t.total)} only</span></div></div>`;
 }
 function savePO(no){
   const items=PITEMS.filter(it=>(it.desc||'').trim()||+it.price);
   if(!items.length){toast('Add at least one item');return;}
-  const t=poTotals();const supName=$('#p_supname').value,supAddr=$('#p_supaddr').value;
-  if(!$('#p_suppick').value)upsertSupplier(supName,supAddr);
+  const t=poTotals();const supName=$('#p_supname').value,supAddr=$('#p_supaddr').value,supState=(($('#p_supstate')||{}).value)||'Maharashtra';
+  if(!$('#p_suppick').value)upsertSupplier(supName,supAddr,supState);
   const obj={no:no||('PO-'+Date.now().toString().slice(-6)),ref:$('#p_ref').value,date:$('#p_date').value,
     category:$('#p_cat').value,subject:$('#p_subject').value,
-    supplier:{name:supName,address:supAddr},items,gstRate:t.rate,
+    supplier:{name:supName,address:supAddr,state:supState},items,gstRate:t.rate,
+    gstType:(($('#p_gsttype')||{}).value)||'auto',
     terms:$('#p_terms').value.split('\n').filter(x=>x.trim()),
-    subtotal:t.subtotal,gst:t.gst,total:t.total,
+    subtotal:t.subtotal,cgst:t.cgst,sgst:t.sgst,igst:t.igst,gst:t.gst,total:t.total,
     status:no?(DB.purchaseorders.find(p=>p.no===no)||{}).status||'Issued':'Issued'};
   if(no){const i=DB.purchaseorders.findIndex(p=>p.no===no);DB.purchaseorders[i]=obj;}else DB.purchaseorders.push(obj);
   persist();closeModal();toast('Purchase order saved');go('purchaseorders');
 }
 function setPOStatus(no,st){DB.purchaseorders.find(p=>p.no===no).status=st;persist();toast('Status: '+st);}
 function delPO(no){confirmBox('Delete this purchase order?',()=>{DB.purchaseorders=DB.purchaseorders.filter(p=>p.no!==no);persist();toast('PO deleted');go('purchaseorders');});}
+function editPORef(no){
+  const p=DB.purchaseorders.find(x=>x.no===no);if(!p)return;
+  const nn=prompt('Enter Ref No.:',p.ref||p.no);
+  if(nn===null)return;
+  const trimmed=nn.trim();
+  if(!trimmed){toast('Ref No. cannot be empty');return;}
+  if(trimmed!==p.ref && DB.purchaseorders.some(x=>x.ref===trimmed)){toast('That Ref No. is already in use');return;}
+  p.ref=trimmed;persist();toast('Ref No. updated');render();
+}
 function printPO(no){
   const p=DB.purchaseorders.find(x=>x.no===no);const s=DB.settings;const sup=p.supplier||{};
   const head=brandHead();
@@ -1452,6 +1481,7 @@ function printPO(no){
   const rows=p.items.map((it,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(it.desc).replace(/\n/g,'<br>')}</td>
     <td>${(+it.price).toFixed(2)}</td><td>${it.qty}</td><td>${((+it.price||0)*(+it.qty||0)).toFixed(2)}</td></tr>`).join('');
   const terms=(p.terms||[]).map(x=>{const i=x.indexOf(':');return i>0?`<li><b>${esc(x.slice(0,i))}:</b>${esc(x.slice(i+1))}</li>`:`<li>${esc(x)}</li>`;}).join('');
+  const resolvedInter=(+p.igst||0)>0;
   $('#printArea').innerHTML=`<div class="doc qdoc"${docStyle()}>
     ${head}
     <div class="qref"><span>Ref No.: ${esc(p.ref||p.no)}</span><span>&nbsp;&nbsp;&nbsp;&nbsp;Date: ${fdate(p.date)}</span></div>
@@ -1462,7 +1492,10 @@ function printPO(no){
     <table class="qtable"><thead><tr><th>Sr. No.</th><th>Description and Specifications</th><th>Price (Rs.)</th><th>Quantity</th><th>Amount (INR)</th></tr></thead>
       <tbody>${rows}
         <tr><td colspan="2"></td><td class="tr">Total</td><td></td><td>${p.subtotal.toFixed(2)}</td></tr>
-        ${(+p.gstRate)?`<tr><td colspan="2"></td><td class="tr">GST (${p.gstRate}%)</td><td></td><td>${p.gst.toFixed(2)}</td></tr>`:''}
+        ${(+p.gstRate)?(resolvedInter
+          ?`<tr><td colspan="2"></td><td class="tr">IGST (${p.gstRate}%)</td><td></td><td>${(+p.igst||0).toFixed(2)}</td></tr>`
+          :`<tr><td colspan="2"></td><td class="tr">CGST (${p.gstRate/2}%)</td><td></td><td>${(+p.cgst||0).toFixed(2)}</td></tr>
+            <tr><td colspan="2"></td><td class="tr">SGST (${p.gstRate/2}%)</td><td></td><td>${(+p.sgst||0).toFixed(2)}</td></tr>`):''}
         <tr><td class="words" colspan="3">(In words: Rupees ${numToWords(p.total)} only)</td><td class="tr">Total</td><td>${p.total.toFixed(2)}</td></tr>
       </tbody></table>
     ${foot}
