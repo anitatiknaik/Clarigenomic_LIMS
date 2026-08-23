@@ -621,7 +621,7 @@ function vSamples(){
          ${sampleFilter.status?`<button class="btn sm" onclick="bulkEmailByStatus('${sampleFilter.status}')" title="Send update to all clients at this stage">✉ Bulk email (${sampleFilter.status})</button>`:''}
        </div>
      </div>
-     ${rows.length?`<table><thead><tr><th>Accession</th><th>Sample ID</th><th>Client</th><th>Test</th><th>Marker</th><th>Status</th><th>Received</th><th></th></tr></thead><tbody>
+          ${rows.length?`<div style="overflow-x:auto"><table><thead><tr><th>Accession</th><th>Sample ID</th><th>Client</th><th>Test</th><th>Marker</th><th>Status</th><th>Received</th><th></th></tr></thead><tbody>
        ${rows.map(x=>`<tr>
          <td><span class="acc">${esc(x.acc)}</span>${x.outsourced?'<br><span class="pill s-Delivered" style="font-size:10px">Outsourced</span>':''}</td>
          <td><b>${esc(x.labCode||'—')}</b></td>
@@ -631,10 +631,10 @@ function vSamples(){
          <td><select class="statussel" onchange="setStatus('${x.acc}',this.value)">${STATUSES.map(s=>`<option ${x.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
          <td>${fdate(x.dateReceived)}</td>
          <td style="white-space:nowrap;text-align:right">
-           <button class="btn sm" onclick="sampleForm('${x.acc}','report')">Edit report</button>
+           <button class="btn sm" onclick="sampleForm('${x.acc}')">Edit sample</button>
            <button class="btn sm" onclick="setStatus('${x.acc}','Report Ready')" title="Marks status as Report Ready">Approve report</button>
            <button class="btn sm" onclick="printReport('${x.acc}')">Print report</button>
-         </td></tr>`).join('')}</tbody></table>`
+       </td></tr>`).join('')}</tbody></table></div>`
      :emptyState('No matching samples','Adjust filters or register a new sample.',"sampleForm()","Register sample")}
    </div>`;
   $('#sq').oninput=e=>{
