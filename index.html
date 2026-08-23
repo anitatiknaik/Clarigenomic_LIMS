@@ -556,7 +556,7 @@ function go(v){current=v;
 function render(){const r={dashboard:vDashboard,samples:vSamples,clients:vClients,catalogue:vCatalogue,invoices:vInvoices,quotations:vQuotations,purchaseorders:vPurchaseOrders,suppliers:vSuppliers,settings:vSettings,backup:vBackup}[current];
   $('#topActions').innerHTML=topActions();r();}
 function topActions(){
-  if(current==='samples')return'<button class="btn primary" onclick="sampleForm()">+ Register sample</button>';
+  if(current==='samples')return'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="bulkSampleForm()">⇧ Bulk upload</button><button class="btn primary" onclick="sampleForm()">+ Register sample</button></div>';
   if(current==='clients')return'<button class="btn primary" onclick="clientForm()">+ Add client</button>';
   if(current==='invoices')return'<button class="btn primary" onclick="invoiceForm()">+ Create invoice</button>';
   if(current==='quotations')return'<button class="btn primary" onclick="quotationForm()">+ Create quotation</button>';
@@ -1811,7 +1811,200 @@ const _open=openModal;openModal=function(h,w){_open(h,w);if($('#i_summary'))reca
   if($('#f_amt'))updSampleAmt();
   if($('#qitems')){renderQItems();}
   if($('#pitems')){renderPItems();}};
+/* ---------------- TRF Excel bulk import ---------------- */
+let bulkSampleRows=[];
+let bulkImportClients=[];
 
+function bulkSampleForm(){
+  openModal(`
+    <div class="modal-head"><h3>Import TRF Excel</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="obanner">
+        Upload your consolidated <b>Client Test Requisition Form (TRF) Excel</b>. One Excel row is treated as one client submission, and the Sample Details are split into individual samples. Existing single-sample registration remains available with <b>+ Register sample</b>.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <label class="btn primary" style="display:inline-flex;align-items:center;gap:6px">
+          ⇧ Choose TRF Excel
+          <input type="file" id="bulk_sample_file" accept=".xlsx,.xls,.csv,text/csv" style="display:none" onchange="previewTRFFile(event)">
+        </label>
+      </div>
+      <div class="hint" style="margin-bottom:12px">
+        Expected columns from your TRF: <b>Name, Institute, Department, Email, Phone, Service Type, Sample Types, Sample Other, Target Gene, No. of Samples, Sample Details, Preferred Format, Extra Analysis, Remarks, Report Release, Payment</b>.
+      </div>
+      <div id="bulk_preview"><div class="empty"><div class="big">No TRF file selected</div>Choose your consolidated Excel file to preview the submissions before importing.</div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="bulk_register_btn" disabled onclick="registerTRFImports()">Import selected TRFs</button>
+    </div>`,true);
+}
+
+function normHeader(v){return String(v==null?'':v).trim().toLowerCase().replace(/\s+/g,' ').replace(/\t/g,'');}
+function cleanText(v){return String(v==null?'':v).replace(/\t/g,' ').replace(/\r/g,'').trim();}
+function parseCSV(text){
+  const rows=[];let row=[];let cell='';let quoted=false;text=String(text||'').replace(/^\uFEFF/,'');
+  for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];
+    if(quoted){if(ch==='"'&&next==='"'){cell+='"';i++;}else if(ch==='"')quoted=false;else cell+=ch;}
+    else{if(ch==='"')quoted=true;else if(ch===','){row.push(cell);cell='';}else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';}else if(ch!=='\r')cell+=ch;}
+  }
+  if(cell!==''||row.length){row.push(cell);rows.push(row);}return rows;
+}
+
+function trfColumnMap(headers){
+  const aliases={
+    'timestamp':'timestamp','name':'name','institute':'institute','department':'department','email':'email','phone':'phone',
+    'service type':'service','sample types':'sampleType','sample other':'sampleOther','primer name':'primerName','primer details':'primerDetails',
+    'target gene':'targetGene','gene details':'geneDetails','no. of samples':'count','no of samples':'count','sample details':'sampleDetails',
+    'preferred format':'preferredFormat','extra analysis':'extraAnalysis','remarks':'remarks','report release':'reportRelease','payment':'payment'
+  };const m={};headers.forEach((h,i)=>{const k=normHeader(h);if(aliases[k])m[aliases[k]]=i;});return m;
+}
+function trfVal(row,map,key){return map[key]!=null?cleanText(row[map[key]]):'';}
+
+function loadXLSXLib(cb){
+  if(window.XLSX){cb();return;}
+  const sc=document.createElement('script');
+  sc.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+  sc.onload=()=>cb();sc.onerror=()=>{toast('Excel reader could not load. Save the TRF as CSV and upload again.');};
+  document.head.appendChild(sc);
+}
+function previewTRFFile(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const isExcel=/\.xlsx?$/i.test(f.name);
+  if(isExcel){loadXLSXLib(()=>readTRFExcel(f));}else{const r=new FileReader();r.onload=()=>processTRFRows(parseCSV(String(r.result||'')));r.readAsText(f);}
+}
+function readTRFExcel(f){
+  try{const r=new FileReader();r.onload=()=>{try{const wb=XLSX.read(r.result,{type:'array',cellDates:true});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});processTRFRows(rows);}catch(err){showTRFError(err);}};r.readAsArrayBuffer(f);}catch(err){showTRFError(err);}
+}
+function showTRFError(err){bulkSampleRows=[];$('#bulk_register_btn').disabled=true;$('#bulk_preview').innerHTML=`<div class="empty"><div class="big">TRF could not be read</div>${esc(err.message||'Invalid Excel/CSV file.')}</div>`;}
+
+function findOrPreviewClient(name,org,email,phone){
+  const n=cleanText(name).toLowerCase(),o=cleanText(org).toLowerCase(),em=cleanText(email).toLowerCase(),ph=cleanText(phone).replace(/\D/g,'');
+  return DB.clients.find(c=>em&&String(c.email||'').trim().toLowerCase()===em)||
+         DB.clients.find(c=>ph&&String(c.phone||'').replace(/\D/g,'')===ph)||
+         DB.clients.find(c=>n&&String(c.name||'').trim().toLowerCase()===n&&(!o||String(c.org||'').trim().toLowerCase()===o))||null;
+}
+function splitSampleDetails(v){
+  let a=cleanText(v).split(/\n|\r|;+/).map(x=>x.trim()).filter(Boolean);
+  if(a.length===1 && /\d+\s*\.\s+/.test(a[0])) a=a[0].split(/\s*\d+\s*\.\s+/).map(x=>x.trim()).filter(Boolean);
+  return a.map(x=>x.replace(/^\d+\s*[.)-]\s*/,'').trim()).filter(Boolean);
+}
+function inferMarker(sample,target){
+  const s=String(sample||'').toUpperCase(),t=String(target||'').toUpperCase();
+  if(/COI/.test(s))return'COI'; if(/ITS2?/.test(s))return'ITS2'; if(/16S/.test(s))return'16S'; if(/MATK/.test(s))return'matK'; if(/RBCL/.test(s))return'rbcL';
+  if(/COI/.test(t))return'COI'; if(/ITS2?/.test(t))return'ITS2'; if(/16S/.test(t))return'16S'; if(/MATK/.test(t))return'matK'; if(/RBCL/.test(t))return'rbcL';
+  return'—';
+}
+function resolveTRFTest(service,marker){
+  const sv=String(service||'').toLowerCase(),mk=String(marker||'').toLowerCase();
+  if(/ngs|next generation/.test(sv))return DB.tests.find(t=>t.code==='SEQ-NGS')||DB.tests.find(t=>/ngs/i.test(t.name));
+  if(/microbi/.test(sv))return DB.tests.find(t=>t.code==='MICRO')||DB.tests.find(t=>/microbi/i.test(t.name));
+  if(/sanger|sequenc/.test(sv))return DB.tests.find(t=>t.code==='SEQ-SAN')||DB.tests.find(t=>/sanger/i.test(t.name));
+  if(/coi/.test(mk))return DB.tests.find(t=>t.code==='BC-COI');
+  if(/its/.test(mk))return DB.tests.find(t=>t.code==='BC-ITS2');
+  if(/16s/.test(mk))return DB.tests.find(t=>t.code==='BC-16S');
+  if(/matk/.test(mk))return DB.tests.find(t=>t.code==='BC-MATK');
+  if(/rbcl/.test(mk))return DB.tests.find(t=>t.code==='BC-RBCL');
+  return DB.tests.find(t=>String(t.name||'').toLowerCase()===sv)||DB.tests.find(t=>String(t.name||'').toLowerCase().includes(sv));
+}
+function processTRFRows(raw){
+  try{
+    if(!raw||raw.length<2)throw new Error('The file has no submission rows.');
+    const map=trfColumnMap(raw[0]);
+    if(map.name==null||map.service==null||map.sampleDetails==null)throw new Error('Required TRF columns not found. Please use the original ClariGenoMic Submissions format.');
+    bulkSampleRows=[];
+    raw.slice(1).forEach((row,idx)=>{
+      if(!row.some(v=>cleanText(v)))return;
+      const name=trfVal(row,map,'name'),org=trfVal(row,map,'institute'),email=trfVal(row,map,'email'),phone=trfVal(row,map,'phone');
+      const details=splitSampleDetails(trfVal(row,map,'sampleDetails'));
+      const count=Math.max(1,parseInt(trfVal(row,map,'count')||'1',10)||1);
+      const samples=details.length?details:Array.from({length:count},(_,i)=>`Sample-${i+1}`);
+      const target=trfVal(row,map,'targetGene'),service=trfVal(row,map,'service'),sampleType=trfVal(row,map,'sampleType')||trfVal(row,map,'sampleOther');
+      const existing=findOrPreviewClient(name,org,email,phone);
+      samples.forEach((sample,j)=>{const marker=inferMarker(sample,target),t=resolveTRFTest(service,marker);
+        bulkSampleRows.push({_row:idx+2,_submission:idx+2,_client:existing,clientName:name,org,email,phone,department:trfVal(row,map,'department'),sampleType,labCode:sample,marker,test:t,service,target,
+          dateReceived:trfVal(row,map,'timestamp')?new Date(trfVal(row,map,'timestamp')).toISOString().slice(0,10):today(),
+          remarks:[trfVal(row,map,'remarks'),trfVal(row,map,'extraAnalysis')?`Extra analysis: ${trfVal(row,map,'extraAnalysis')}`:'',trfVal(row,map,'preferredFormat')?`Preferred format: ${trfVal(row,map,'preferredFormat')}`:'',trfVal(row,map,'reportRelease')?`Report release: ${trfVal(row,map,'reportRelease')}`:'',trfVal(row,map,'payment')?`Payment: ${trfVal(row,map,'payment')}`:''].filter(Boolean).join(' | ')});
+      });
+    });
+    renderTRFPreview();
+  }catch(err){showTRFError(err);}
+}
+function trfClientKey(x){
+  const em=cleanText(x.email).toLowerCase();
+  const ph=cleanText(x.phone).replace(/\D/g,'');
+  const n=cleanText(x.clientName).toLowerCase();
+  const o=cleanText(x.org).toLowerCase();
+  return em ? 'email:'+em : ph ? 'phone:'+ph : 'name:'+n+'|org:'+o;
+}
+function sampleDuplicateKeyForRow(x){
+  return trfClientKey(x)+'|sample:'+cleanText(x.labCode).toLowerCase()+'|test:'+(x.test&&x.test.code||'')+'|marker:'+cleanText(x.marker||'—').toLowerCase();
+}
+function sampleDuplicateExisting(x){
+  const clientId=x._client&&x._client.id;
+  const key=sampleDuplicateKeyForRow(x);
+  return DB.samples.find(s=>{
+    const c=client(s.clientId)||{};
+    const clientSame=clientId ? s.clientId===clientId : trfClientKey({clientName:c.name,org:c.org,email:c.email,phone:c.phone})===trfClientKey(x);
+    const sampleSame=cleanText(s.labCode).toLowerCase()===cleanText(x.labCode).toLowerCase();
+    const testSame=String(s.testCode||'')===String(x.test&&x.test.code||'');
+    const markerSame=cleanText(s.marker||'—').toLowerCase()===cleanText(x.marker||'—').toLowerCase();
+    return clientSame&&sampleSame&&testSame&&markerSame;
+  })||null;
+}
+function markTRFDuplicates(){
+  const seen={};
+  bulkSampleRows.forEach(x=>{
+    x._duplicate=sampleDuplicateExisting(x);
+    const k=sampleDuplicateKeyForRow(x);
+    if(!x._duplicate && seen[k]) x._duplicate={acc:'In this upload',_newUpload:true};
+    else if(!x._duplicate) seen[k]=x;
+  });
+}
+function renderTRFPreview(){
+  markTRFDuplicates();
+  const bad=bulkSampleRows.filter(x=>!x.clientName||!x.sampleType||!x.test);
+  const duplicates=bulkSampleRows.filter(x=>x._duplicate);
+  const newRows=bulkSampleRows.filter(x=>!x._duplicate);
+  const newClients=[];
+  newRows.forEach(x=>{if(!x._client&&!newClients.some(c=>trfClientKey(c)===trfClientKey(x)))newClients.push({name:x.clientName,org:x.org,email:x.email,phone:x.phone,department:x.department});});
+  bulkImportClients=newClients;
+  const groups={};bulkSampleRows.forEach(x=>{const k=x._submission;groups[k]=(groups[k]||0)+1;});
+  const preview=bulkSampleRows.slice(0,30);
+  $('#bulk_preview').innerHTML=`
+    <div class="hint" style="margin-bottom:8px"><b>${Object.keys(groups).length}</b> TRF submissions → <b>${bulkSampleRows.length}</b> individual samples. <span style="color:var(--ok)"><b>${newRows.length}</b> new</span> · <span style="color:var(--rose)"><b>${duplicates.length}</b> duplicate(s) will be skipped</span>. ${newClients.length?`<span><b>${newClients.length}</b> new client(s) will be created.</span>`:''} ${bad.length?`<span style="color:var(--rose)"><b>${bad.length}</b> samples need correction.</span>`:''}</div>
+    <div style="overflow:auto;max-height:380px;border:1px solid var(--line);border-radius:8px"><table><thead><tr><th>TRF row</th><th>Client</th><th>Sample ID</th><th>Test</th><th>Marker</th><th>Status</th><th>Existing Registration ID</th></tr></thead><tbody>${preview.map(x=>`<tr><td>${x._row}</td><td>${esc(x.clientName)}</td><td>${esc(x.labCode)}</td><td>${esc(x.test?x.test.name:'—')}</td><td>${esc(x.marker)}</td><td>${x._duplicate?'<span class="pill pay-Partial">Duplicate — skip</span>':'<span class="pill pay-Paid">New — import</span>'}</td><td>${x._duplicate?esc(x._duplicate.regId||x._duplicate.acc||'Already registered'):'—'}</td></tr>`).join('')}</tbody></table></div>
+    <div class="hint" style="margin-top:9px"><b>Duplicate rule:</b> same <b>Client + Sample ID + Test + Marker</b>. Therefore the same sample name with a different marker (for example <b>S001 + COI</b> and <b>S001 + ITS</b>) will be imported as two separate samples.</div>
+    ${newClients.length?`<div class="hint" style="margin-top:7px">New client records will use Name, Institute, Email and Phone from the TRF. Address, State and GSTIN can be completed later from <b>Clients</b>.</div>`:''}
+    ${bad.length?`<div class="hint" style="margin-top:8px;color:var(--rose)">Samples are blocked when Client Name, Sample Type, or Test cannot be determined from the TRF.</div>`:''}
+    ${bulkSampleRows.length>30?`<div class="hint" style="margin-top:7px">Showing first 30 samples. Duplicate checking is applied to all ${bulkSampleRows.length} samples before import.</div>`:''}`;
+  $('#bulk_register_btn').disabled=!!bad.length||!newRows.length;
+  $('#bulk_register_btn').textContent=newRows.length?`Import ${newRows.length} new sample${newRows.length===1?'':'s'}`:'No new samples to import';
+}
+function createTRFClient(x){
+  const c={id:cliId(),name:x.clientName,org:x.org,email:x.email,phone:x.phone,address:'',state:'Maharashtra',gstin:'',dateAdded:today()};DB.clients.push(c);return c;
+}
+function registerTRFImports(){
+  if(!bulkSampleRows.length)return;
+  markTRFDuplicates();
+  const bad=bulkSampleRows.filter(x=>!x.clientName||!x.sampleType||!x.test);
+  if(bad.length){toast('Correct invalid TRF rows before importing');return;}
+  const toImport=bulkSampleRows.filter(x=>!x._duplicate);
+  if(!toImport.length){toast('All uploaded samples are already registered');return;}
+  const clientMap={};let addedClients=0;
+  toImport.forEach(x=>{const key=trfClientKey(x);if(!clientMap[key]){clientMap[key]=x._client||createTRFClient(x);if(!x._client)addedClients++;}x._resolvedClient=clientMap[key];});
+  let added=0,skipped=0;
+  toImport.forEach(x=>{
+    const dup=sampleDuplicateExisting(Object.assign({},x,{_client:x._resolvedClient}));
+    if(dup){skipped++;return;}
+    const t=x.test;
+    const newRegId=accId();
+    DB.samples.push({acc:newRegId,dateReceived:x.dateReceived||today(),clientId:x._resolvedClient.id,sampleType:x.sampleType,testCode:t.code,marker:x.marker||'—',qty:1,assignedTo:'',remarks:x.remarks||'',unitPrice:t.price||0,discount:0,discType:'percent',status:'Received',statusUpdated:today(),dateReported:'',species:'',identity:'',queryCoverage:'',eValue:'',genbank:'',seqLength:'',conclusion:'',labCode:x.labCode||'',regId:newRegId,analysisDate:'',specimen:x.sampleType,sequence:'',gelImage:'',outsourced:false,extLab:'',outPages:[],invoiceNo:''});
+    added++;
+  });
+  persist();
+  const msg=added+' new sample'+(added===1?'':'s')+' imported'+(skipped?' · '+skipped+' duplicate'+(skipped===1?'':'s')+' skipped':'')+(addedClients?' · '+addedClients+' new client'+(addedClients===1?'':'s')+' created':'');
+  bulkSampleRows=[];bulkImportClients=[];closeModal();toast(msg);go('samples');
+}
 /* boot happens via window.onload -> Google Sign-In -> loadData_() above */
 </script>
 </body>
