@@ -207,11 +207,11 @@
   .totbox{margin-left:auto;width:280px;font-size:12.5px}
   .totbox .r{display:flex;justify-content:space-between;padding:4px 0}
   .totbox .r.grand{border-top:2px solid var(--purple);margin-top:5px;padding-top:7px;font-weight:800;color:var(--purple);font-size:14px}
-  .tinv-title{text-align:center;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;border:1px solid #000;padding:6px;margin:14px 0}
+  .tinv-title{text-align:center;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;padding:6px;margin:14px 0}
   .tinv-meta{font-size:11.5px;margin:10px 0 4px}
   .tinv-meta .row{display:flex;justify-content:space-between;gap:20px;margin-bottom:3px}
   .tinv-table{width:100%;border-collapse:collapse;font-size:10.5px;margin:10px 0}
-  .tinv-table th{background:var(--purple);color:#fff;padding:6px 7px;text-align:center;font-weight:700}
+  .tinv-table th{background:var(--purple);color:#fff;padding:6px 4px;text-align:center;font-weight:700;border:1px solid var(--purple);white-space:nowrap;font-size:9.5px}
   .tinv-table td{border:1px solid #ccc;padding:6px 7px;text-align:center}
   .tinv-words{font-size:11px;margin:8px 0 12px}
   .tinv-acct{border:1px solid #999;border-radius:4px;padding:10px 12px;font-size:11px;margin:10px 0;line-height:1.6}
@@ -1039,6 +1039,11 @@ function invoiceFormHtml(cid){
    <div class="modal-body">
      <div class="field"><label>Client</label><select id="i_client" onchange="openModal(invoiceFormHtml(this.value),true)">
        ${DB.clients.map(c=>`<option value="${c.id}" ${c.id===cid?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>
+     <div class="field"><label>GST type</label><select id="i_gsttype" onchange="recalcInv()">
+       <option value="auto">Auto (based on client's state)</option>
+       <option value="intra">CGST + SGST (in-state)</option>
+       <option value="inter">IGST (out-of-state)</option>
+     </select></div>
      <div class="field"><label>Select samples to bill</label></div>
      ${uninvoiced.length?uninvoiced.map(s=>{const t=test(s.testCode)||{};const amt=sampleAmt(s);const disc=+s.discount||0;
        return`<label class="checkrow"><input type="checkbox" class="i_s" value="${s.acc}" data-amt="${amt}" checked onchange="recalcInv()">
@@ -1051,16 +1056,22 @@ function invoiceFormHtml(cid){
    <div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button>
      <button class="btn primary" onclick="saveInvoice('${cid}')">Create invoice</button></div>`;
 }
-function gstFor(cid,taxable){
-  const c=client(cid)||{};const intra=DB.settings.gstEnabled&&c.state===DB.settings.homeState;
+function gstFor(cid,taxable,override){
+  const c=client(cid)||{};
+  let intra;
+  if(override==='intra')intra=true;
+  else if(override==='inter')intra=false;
+  else intra=c.state===DB.settings.homeState;
+  intra=DB.settings.gstEnabled&&intra;
   const inter=DB.settings.gstEnabled&&!intra;
   return{cgst:intra?taxable*0.09:0,sgst:intra?taxable*0.09:0,igst:inter?taxable*0.18:0};
 }
 function recalcInv(){
   const cid=$('#i_client').value;
+  const override=(($('#i_gsttype')||{}).value)||'auto';
   let taxable=0;document.querySelectorAll('.i_s:checked').forEach(b=>taxable+=+b.dataset.amt);
-  const g=gstFor(cid,taxable);const total=taxable+g.cgst+g.sgst+g.igst;
-  const c=client(cid)||{};const intra=c.state===DB.settings.homeState;
+  const g=gstFor(cid,taxable,override);const total=taxable+g.cgst+g.sgst+g.igst;
+  const intra=(+g.cgst)>0;
   $('#i_summary').innerHTML=`<div class="totbox">
     <div class="r"><span>Taxable value</span><b>${rs(taxable)}</b></div>
     ${DB.settings.gstEnabled?(intra?`<div class="r"><span>CGST 9%</span><span>${rs(g.cgst)}</span></div>
@@ -1071,8 +1082,9 @@ function recalcInv(){
 function saveInvoice(cid){
   const accs=[...document.querySelectorAll('.i_s:checked')].map(b=>b.value);
   if(!accs.length){toast('Select at least one sample');return;}
+  const override=(($('#i_gsttype')||{}).value)||'auto';
   let taxable=0;accs.forEach(a=>{const s=DB.samples.find(x=>x.acc===a);taxable+=sampleAmt(s);});
-  const g=gstFor(cid,taxable);const total=taxable+g.cgst+g.sgst+g.igst;
+  const g=gstFor(cid,taxable,override);const total=taxable+g.cgst+g.sgst+g.igst;
   const no=invId();
   DB.invoices.push({no,date:today(),clientId:cid,accessions:accs,taxable,cgst:g.cgst,sgst:g.sgst,igst:g.igst,total,pay:'Pending'});
   accs.forEach(a=>{DB.samples.find(x=>x.acc===a).invoiceNo=no;});
