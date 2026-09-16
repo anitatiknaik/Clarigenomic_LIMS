@@ -1570,7 +1570,21 @@
                 document.head.appendChild(script);
             });
         }
-        const SAVE_CHUNK_SIZE = 1400; // raw chars per chunk, kept well under safe URL length limits
+        const SAVE_CHUNK_SIZE = 5000; // raw chars per chunk -- large enough to cut round-trips dramatically for big databases, while staying well under practical URL length limits even after encodeURIComponent expansion
+        const CHUNK_MAX_RETRIES = 3; // a single failed chunk no longer aborts the entire save outright
+        async function jsonpRequestWithRetry(url, attempts) {
+            attempts = attempts || CHUNK_MAX_RETRIES;
+            let lastErr;
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    return await jsonpRequest(url);
+                } catch (err) {
+                    lastErr = err;
+                    if (i < attempts - 1) await new Promise(res => setTimeout(res, 500 * (i + 1)));
+                }
+            }
+            throw lastErr;
+        }
         async function flushSave() {
             if (!ID_TOKEN) return;
             if (SAVE_INFLIGHT) {
@@ -1587,11 +1601,11 @@
                 if (chunks.length === 0) chunks.push('');
                 for (let i = 0; i < chunks.length; i++) {
                     const url = API_URL + '?action=savechunk&session=' + encodeURIComponent(session) + '&idx=' + i + '&total=' + chunks.length + '&data=' + encodeURIComponent(chunks[i]);
-                    const r = await jsonpRequest(url);
-                    if (!r || !r.ok) throw new Error((r && r.error) || ('chunk ' + i + ' failed to save'));
+                    const r = await jsonpRequestWithRetry(url);
+                    if (!r || !r.ok) throw new Error((r && r.error) || ('chunk ' + i + ' failed to save after ' + CHUNK_MAX_RETRIES + ' attempts'));
                 }
                 const commitUrl = API_URL + '?action=savecommit&token=' + encodeURIComponent(ID_TOKEN) + '&session=' + encodeURIComponent(session) + '&total=' + chunks.length;
-                const r = await jsonpRequest(commitUrl);
+                const r = await jsonpRequestWithRetry(commitUrl);
                 if (!r || !r.ok) throw new Error((r && r.error) || 'save failed to commit');
                 SAVE_INFLIGHT = false;
                 NOSTORE = false;
@@ -4741,7 +4755,17 @@ function exportAllExcel(){
   download('ClariGenoMic_backup_'+today()+'.xls',xml,'application/vnd.ms-excel');toast('Excel workbook downloaded');}
 function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.settings||!d.tests)throw 0;
-    confirmBox('Restore this backup? It replaces all current data.',()=>{DB=d;persist();toast('Backup restored');go('dashboard');},'Restore');
+    confirmBox('Restore this backup? It replaces all current data.',async ()=>{
+      DB=d;
+      toast('Saving restored data — please wait, this can take a minute for a large backup…');
+      await flushSave();
+      if(NOSTORE){
+        toast('Restore did NOT save successfully — your previous data is likely still what\'s stored. Check your connection and try again.');
+      }else{
+        toast('Backup restored and saved successfully');
+        go('dashboard');
+      }
+    },'Restore');
   }catch(_){toast('That file is not a valid backup');}};
   r.readAsText(f);}
 function resetAll(){confirmBox('Erase ALL data and start fresh? This cannot be undone.',()=>{DB=seed();persist();toast('Reset complete');go('dashboard');},'Erase everything');}
