@@ -1503,7 +1503,10 @@
                         <div class="sub" id="viewSub"></div>
                     </div>
                 </div>
-                <div id="topActions"></div>
+                <div style="display:flex;align-items:center;gap:14px">
+                    <span id="saveStatus" style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap"></span>
+                    <div id="topActions"></div>
+                </div>
             </div>
             <div class="wrap">
                 <div class="banner" id="storeBanner">Heads up: the last save to your data sheet failed (connection issue). Your changes are kept in this tab — reload the page or check your connection, and edits will sync again.</div>
@@ -1535,10 +1538,132 @@
             SAVE_PENDING = false,
             SAVE_INFLIGHT = false;
 
-        function persist() {
-            clearTimeout(SAVE_TIMER);
-            SAVE_TIMER = setTimeout(flushSave, 600);
+        /* ---------------- local-first save (IndexedDB) ----------------
+           The actual fix for "PC shut down and I lost my edit": every
+           change is written to the browser's own local disk (IndexedDB)
+           INSTANTLY — a local write, not a network request, so it finishes
+           in milliseconds regardless of connection quality or Google's
+           response time. The sync to your Google Sheet still happens in
+           the background exactly as before. If the computer shuts down
+           before that background sync finishes, the data is already safe
+           on disk — next time the LIMS opens on this same computer, it
+           notices the unsynced local copy and resumes from there instead
+           of silently loading an older, stale server copy. */
+        const LOCAL_DB_NAME = 'clarigenomic_lims_local';
+        const LOCAL_DB_VERSION = 1;
+        const LOCAL_STORE_NAME = 'snapshots';
+        const LOCAL_SNAPSHOT_KEY = 'current';
+
+        function openLocalDB_() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) { reject(new Error('IndexedDB not available in this browser')); return; }
+                const req = indexedDB.open(LOCAL_DB_NAME, LOCAL_DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const idb = e.target.result;
+                    if (!idb.objectStoreNames.contains(LOCAL_STORE_NAME)) {
+                        idb.createObjectStore(LOCAL_STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
         }
+
+        async function saveLocalSnapshot_(dbObject, synced) {
+            try {
+                const idb = await openLocalDB_();
+                await new Promise((resolve, reject) => {
+                    const tx = idb.transaction(LOCAL_STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(LOCAL_STORE_NAME);
+                    const req = store.put({ id: LOCAL_SNAPSHOT_KEY, db: dbObject, savedAt: Date.now(), synced: !!synced });
+                    req.onsuccess = () => resolve();
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (err) {
+                console.error('local snapshot save failed (not fatal — sync to server still proceeds normally):', err);
+            }
+        }
+
+        async function loadLocalSnapshot_() {
+            try {
+                const idb = await openLocalDB_();
+                return await new Promise((resolve, reject) => {
+                    const tx = idb.transaction(LOCAL_STORE_NAME, 'readonly');
+                    const store = tx.objectStore(LOCAL_STORE_NAME);
+                    const req = store.get(LOCAL_SNAPSHOT_KEY);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (err) {
+                console.error('local snapshot load failed:', err);
+                return null;
+            }
+        }
+
+        async function markLocalSnapshotSynced_() {
+            try {
+                const idb = await openLocalDB_();
+                await new Promise((resolve, reject) => {
+                    const tx = idb.transaction(LOCAL_STORE_NAME, 'readwrite');
+                    const store = tx.objectStore(LOCAL_STORE_NAME);
+                    const getReq = store.get(LOCAL_SNAPSHOT_KEY);
+                    getReq.onsuccess = () => {
+                        const rec = getReq.result;
+                        if (!rec) { resolve(); return; }
+                        rec.synced = true;
+                        const putReq = store.put(rec);
+                        putReq.onsuccess = () => resolve();
+                        putReq.onerror = () => reject(putReq.error);
+                    };
+                    getReq.onerror = () => reject(getReq.error);
+                });
+            } catch (err) {
+                console.error('mark-synced failed (not fatal):', err);
+            }
+        }
+
+        function updateSaveStatus_(state) {
+            const el = document.getElementById('saveStatus');
+            if (!el) return;
+            if (state === 'pending') {
+                el.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--warn,#c98a1f);display:inline-block"></span> Unsaved changes…';
+            } else if (state === 'saving') {
+                el.innerHTML = '<span style="width:12px;height:12px;border:2px solid #e0dcec;border-top-color:var(--purple,#4B2E83);border-radius:50%;display:inline-block;animation:saveSpin .7s linear infinite"></span> Saving…';
+            } else if (state === 'saved') {
+                el.innerHTML = '<span style="color:#1e9e5a">✓</span> All changes saved';
+            } else if (state === 'error') {
+                el.innerHTML = '<span style="color:#c94040">⚠</span> Save failed — see banner below';
+            } else {
+                el.innerHTML = '';
+            }
+        }
+        if (!document.getElementById('saveSpinStyle')) {
+            const st = document.createElement('style');
+            st.id = 'saveSpinStyle';
+            st.textContent = '@keyframes saveSpin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(st);
+        }
+        function persist() {
+            // Save to local disk IMMEDIATELY, every time — this is what
+            // actually protects against a sudden shutdown, since it's a
+            // local write (milliseconds) rather than a network request.
+            saveLocalSnapshot_(DB, false);
+            clearTimeout(SAVE_TIMER);
+            updateSaveStatus_('pending');
+            SAVE_TIMER = setTimeout(flushSave, 300);
+        }
+        /* Warn before closing/reloading if there's anything not yet confirmed
+           saved — either still waiting out the debounce, or actively mid-save.
+           This can't help with a sudden power loss (nothing running in the
+           browser can), but it does catch someone closing the tab/browser
+           too early while a save is genuinely still in flight. */
+        window.addEventListener('beforeunload', function(e) {
+            if (SAVE_TIMER || SAVE_INFLIGHT || SAVE_PENDING) {
+                e.preventDefault();
+                e.returnValue = 'Changes are still saving. Leaving now may lose them.';
+                return e.returnValue;
+            }
+        });
         /* Loads a URL via a <script> tag and waits for it to call back with JSON
            (JSONP). Used for every request to the API — including saves — because
            Apps Script Web Apps route requests through an internal redirect before
@@ -1594,6 +1719,7 @@
                 return;
             }
             SAVE_INFLIGHT = true;
+            updateSaveStatus_('saving');
             const b = document.getElementById('storeBanner');
             try {
                 const json = JSON.stringify(DB);
@@ -1612,14 +1738,19 @@
                 SAVE_INFLIGHT = false;
                 NOSTORE = false;
                 if (b) b.style.display = 'none';
+                markLocalSnapshotSynced_();
                 if (SAVE_PENDING) {
                     SAVE_PENDING = false;
+                    updateSaveStatus_('pending');
                     flushSave();
+                } else {
+                    updateSaveStatus_('saved');
                 }
             } catch (err) {
                 SAVE_INFLIGHT = false;
                 NOSTORE = true;
                 if (b) b.style.display = 'block';
+                updateSaveStatus_('error');
                 console.error('save failed:', err);
                 if (SAVE_PENDING) {
                     SAVE_PENDING = false;
@@ -1808,9 +1939,28 @@
             if (!DB.settings.reportSections || !DB.settings.reportSections.length) DB.settings.reportSections = seed().settings.reportSections;
         }
 
-        function bootApp_(loadedDb) {
+        async function bootApp_(loadedDb) {
             BOOT_DONE = true;
-            DB = loadedDb || seed();
+            const serverDb = loadedDb || seed();
+            /* Check for local changes that were saved to this browser's disk
+               but never confirmed synced to the server — the exact situation
+               a sudden shutdown mid-save would leave behind. If found, that
+               local copy is what actually has your latest work, so it takes
+               precedence over whatever the server has right now, and a sync
+               is kicked off immediately to push it up. */
+            let recovered = false;
+            try {
+                const localSnap = await loadLocalSnapshot_();
+                if (localSnap && localSnap.db && !localSnap.synced) {
+                    DB = localSnap.db;
+                    recovered = true;
+                } else {
+                    DB = serverDb;
+                }
+            } catch (err) {
+                console.error('local snapshot check failed, using server data:', err);
+                DB = serverDb;
+            }
             normalizeDB_();
             /* Deliberately NOT auto-persisting here, even for a brand-new/empty
                database. Writing back immediately on every load meant that ANY
@@ -1822,6 +1972,10 @@
             document.getElementById('bootScreen').style.display = 'none';
             document.getElementById('appRoot').style.display = '';
             go('dashboard');
+            if (recovered) {
+                toast('Recovered changes that hadn\'t finished saving last time — syncing now.');
+                persist();
+            }
         }
 
         function bootFailed_(err) {
